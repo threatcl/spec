@@ -1,6 +1,6 @@
-spec_version = "0.1.8"
+spec_version = "0.1.9"
 
 threatmodel "Tower of London" {
   author = "@xntrik"
-  including = "https://raw.githubusercontent.com/xntrik/hcltm/main/pkg/spec/testdata/including/shared/tower.hcl"
+  including = "https://raw.githubusercontent.com/threatcl/spec/main/testdata/including/shared/tower.hcl"
 }

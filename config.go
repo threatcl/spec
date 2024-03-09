@@ -4,14 +4,12 @@ import (
 	"fmt"
 	"os"
 
-	// "github.com/xntrik/hcltm/version"
-
 	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclparse"
 )
 
 const (
-	VERSION = "0.1.8"
+	VERSION = "0.1.9"
 )
 
 type ThreatmodelSpecConfig struct {
