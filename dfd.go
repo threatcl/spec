@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/goccy/go-graphviz"
-	dfd "github.com/marqeta/go-dfd/dfd"
+	dfd "github.com/xntrik/go-dfd/dfd"
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/encoding"
 )
