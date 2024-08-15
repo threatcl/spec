@@ -64,6 +64,30 @@ func TestNewTMParser(t *testing.T) {
 
 }
 
+func TestParserHclString(t *testing.T) {
+	defaultCfg := &ThreatmodelSpecConfig{}
+	defaultCfg.setDefaults()
+
+	tmParser := NewThreatmodelParser(defaultCfg)
+
+	err := tmParser.ParseFile("./testdata/including/corp-app.hcl", false)
+
+	if err != nil {
+		t.Errorf("Error parsing legit TM file: %s", err)
+	}
+
+	hclOut := tmParser.HclString()
+	// t.Errorf("hclString:\n%s\n", tmParser.HclString())
+
+	if !strings.Contains(hclOut, "threatmodel \"Tower of London\"") {
+		t.Errorf("Did not find Tower of London HCL")
+	}
+
+	if !strings.Contains(hclOut, "A historic castle") {
+		t.Errorf("Did not find 'A historic castle'")
+	}
+}
+
 func TestParseInvalidFileExt(t *testing.T) {
 	defaultCfg := &ThreatmodelSpecConfig{}
 	defaultCfg.setDefaults()

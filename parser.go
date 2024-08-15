@@ -51,6 +51,13 @@ func (p *ThreatmodelParser) GetWrapped() *ThreatmodelWrapped {
 	return p.wrapped
 }
 
+func (p *ThreatmodelParser) HclString() string {
+	hclOut := hclwrite.NewEmptyFile()
+	gohcl.EncodeIntoBody(p.wrapped, hclOut.Body())
+
+	return fmt.Sprintf("%s", hclOut.Bytes())
+}
+
 func (p *ThreatmodelParser) AddTMAndWrite(tm Threatmodel, f io.Writer, debug bool) error {
 
 	if debug {
