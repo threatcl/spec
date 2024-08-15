@@ -59,6 +59,31 @@ func TestParseHCLFileWithIncluding(t *testing.T) {
 
 }
 
+func TestHclString(t *testing.T) {
+	defaultCfg := &ThreatmodelSpecConfig{}
+	defaultCfg.setDefaults()
+	tmParser := NewThreatmodelParser(defaultCfg)
+
+	err := tmParser.ParseFile("./testdata/including/corp-app.hcl", false)
+
+	if err != nil {
+		t.Errorf("Error parsing legit TM file: %s", err)
+	}
+
+	if len(tmParser.GetWrapped().Threatmodels) != 2 {
+		t.Errorf("We were meant to get 2 threat models, instead we got %d", len(tmParser.GetWrapped().Threatmodels))
+	}
+
+	hclString := tmParser.GetWrapped().Threatmodels[0].HclString()
+	if err != nil {
+		t.Errorf("Error performing HclString: %s", err)
+	}
+
+	if !strings.Contains(hclString, "A historic castle") {
+		t.Errorf("The output string didn't contain 'A historic castle'")
+	}
+}
+
 func TestParseHCLFileWithIncludingRemote(t *testing.T) {
 	defaultCfg := &ThreatmodelSpecConfig{}
 	defaultCfg.setDefaults()

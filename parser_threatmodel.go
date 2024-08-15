@@ -8,7 +8,17 @@ import (
 
 	gg "github.com/hashicorp/go-getter"
 	"github.com/hashicorp/go-multierror"
+	"github.com/hashicorp/hcl/v2/gohcl"
+	"github.com/hashicorp/hcl/v2/hclwrite"
 )
+
+func (tm *Threatmodel) HclString() string {
+
+	hclOut := hclwrite.NewEmptyFile()
+	gohcl.EncodeIntoBody(tm, hclOut.Body())
+
+	return fmt.Sprintf("%s", hclOut.Bytes())
+}
 
 func (tm *Threatmodel) Include(cfg *ThreatmodelSpecConfig, myfilename string) error {
 	if tm.Including == "" {
