@@ -2,6 +2,7 @@ package spec
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -294,9 +295,12 @@ func dotToPngBytes(raw []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	out := graphviz.New()
+	out, err := graphviz.New(context.Background())
+	if err != nil {
+		return nil, err
+	}
 	var buf bytes.Buffer
-	if err := out.Render(g, graphviz.PNG, &buf); err != nil {
+	if err := out.Render(context.Background(), g, graphviz.PNG, &buf); err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
@@ -326,15 +330,27 @@ func (d *DataFlowDiagram) GenerateDfdPngBytes(tmName string) ([]byte, error) {
 	return dotToPngBytes(dotBytes)
 }
 
-func dotToSvg(raw []byte, file string) error {
+func dotToSvgBytes(raw []byte) ([]byte, error) {
 	g, err := graphviz.ParseBytes(raw)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	out := graphviz.New()
-	err = out.RenderFilename(g, graphviz.SVG, file)
+
+	out, err := graphviz.New(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	var buf bytes.Buffer
+	if err := out.Render(context.Background(), g, graphviz.SVG, &buf); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func dotToSvg(raw []byte, file string) error {
+	svgBytes, err := dotToSvgBytes(raw)
 	if err != nil {
 		return err
 	}
-	return nil
+	return os.WriteFile(file, svgBytes, 0644)
 }
