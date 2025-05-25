@@ -1,6 +1,8 @@
 package spec
 
 import (
+	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -38,13 +40,7 @@ func (d *DataFlowDiagram) GenerateDfdPng(filepath, tmName string) error {
 	}
 
 	dotBytes := []byte(dot)
-
-	err = dotToPng(dotBytes, filepath)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return dotToPng(dotBytes, filepath)
 }
 
 func (d *DataFlowDiagram) GenerateDfdSvg(filepath, tmName string) error {
@@ -293,29 +289,68 @@ func (d *DataFlowDiagram) generateDfdDotFile(filepath, tmName string) (string, e
 	return dot, nil
 }
 
-func dotToPng(raw []byte, file string) error {
+func dotToPngBytes(raw []byte) ([]byte, error) {
 	g, err := graphviz.ParseBytes(raw)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	out := graphviz.New()
-	err = out.RenderFilename(g, graphviz.PNG, file)
+	out, err := graphviz.New(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	var buf bytes.Buffer
+	if err := out.Render(context.Background(), g, graphviz.PNG, &buf); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func dotToPng(raw []byte, file string) error {
+	pngBytes, err := dotToPngBytes(raw)
 	if err != nil {
 		return err
 	}
-	return nil
+	return os.WriteFile(file, pngBytes, 0644)
+}
+
+func (d *DataFlowDiagram) GenerateDfdPngBytes(tmName string) ([]byte, error) {
+	tmpFile, err := ioutil.TempFile("", "dfd")
+	if err != nil {
+		return nil, err
+	}
+	defer os.RemoveAll(tmpFile.Name())
+
+	dot, err := d.generateDfdDotFile(tmpFile.Name(), tmName)
+	if err != nil {
+		return nil, err
+	}
+
+	dotBytes := []byte(dot)
+	return dotToPngBytes(dotBytes)
+}
+
+func dotToSvgBytes(raw []byte) ([]byte, error) {
+	g, err := graphviz.ParseBytes(raw)
+	if err != nil {
+		return nil, err
+	}
+
+	out, err := graphviz.New(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	var buf bytes.Buffer
+	if err := out.Render(context.Background(), g, graphviz.SVG, &buf); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 func dotToSvg(raw []byte, file string) error {
-	g, err := graphviz.ParseBytes(raw)
+	svgBytes, err := dotToSvgBytes(raw)
 	if err != nil {
 		return err
 	}
-	out := graphviz.New()
-	err = out.RenderFilename(g, graphviz.SVG, file)
-	if err != nil {
-		return err
-	}
-	return nil
+	return os.WriteFile(file, svgBytes, 0644)
 }
