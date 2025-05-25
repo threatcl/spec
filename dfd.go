@@ -34,7 +34,7 @@ func (d *DataFlowDiagram) GenerateDfdPng(filepath, tmName string) error {
 	}
 	defer os.RemoveAll(tmpFile.Name())
 
-	dot, err := d.generateDfdDotFile(filepath, tmName)
+	dot, err := d.generateDfdDotFile(tmpFile.Name(), tmName)
 	if err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ func (d *DataFlowDiagram) GenerateDfdSvg(filepath, tmName string) error {
 	}
 	defer os.RemoveAll(tmpFile.Name())
 
-	dot, err := d.generateDfdDotFile(filepath, tmName)
+	dot, err := d.generateDfdDotFile(tmpFile.Name(), tmName)
 	if err != nil {
 		return err
 	}
