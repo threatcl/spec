@@ -375,3 +375,58 @@ func TestDfdSvgGenerate(t *testing.T) {
 		})
 	}
 }
+
+func TestDfdPngGenerateBytes(t *testing.T) {
+	cases := []struct {
+		name        string
+		tm          *Threatmodel
+		exp         string
+		errorthrown bool
+	}{
+		{
+			"valid_dfd",
+			dfdTm(),
+			"",
+			false,
+		},
+		{
+			"valid_full_dfd",
+			fullDfdTm(),
+			"",
+			false,
+		},
+		{
+			"valid_full_dfd2",
+			fullDfdTm2(),
+			"",
+			false,
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			// t.Parallel()
+
+			for _, adfd := range tc.tm.DataFlowDiagrams {
+				pngBytes, err := adfd.GenerateDfdPngBytes(tc.tm.Name)
+
+				if err != nil {
+					if !strings.Contains(err.Error(), tc.exp) {
+						t.Errorf("%s: Error generating png bytes: %s", tc.name, err)
+					}
+				} else {
+					if tc.errorthrown {
+						t.Errorf("%s: an error was thrown when it shouldn't have", tc.name)
+					} else {
+						// Verify the bytes are actually a PNG
+						if http.DetectContentType(pngBytes) != "image/png" {
+							t.Errorf("%s: The output bytes aren't a png, they're '%s'", tc.name, http.DetectContentType(pngBytes))
+						}
+					}
+				}
+			}
+		})
+	}
+}
