@@ -2,7 +2,6 @@ package spec
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -295,12 +294,9 @@ func dotToPngBytes(raw []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	out, err := graphviz.New(context.Background())
-	if err != nil {
-		return nil, err
-	}
+	out := graphviz.New()
 	var buf bytes.Buffer
-	if err := out.Render(context.Background(), g, graphviz.PNG, &buf); err != nil {
+	if err := out.Render(g, graphviz.PNG, &buf); err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
@@ -336,12 +332,9 @@ func dotToSvgBytes(raw []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	out, err := graphviz.New(context.Background())
-	if err != nil {
-		return nil, err
-	}
+	out := graphviz.New()
 	var buf bytes.Buffer
-	if err := out.Render(context.Background(), g, graphviz.SVG, &buf); err != nil {
+	if err := out.Render(g, graphviz.SVG, &buf); err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
