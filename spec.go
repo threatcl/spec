@@ -26,6 +26,7 @@ type Threat struct {
 	InformationAssetRefs []string           `json:"informationAssetRefs,omitempty" hcl:"information_asset_refs,optional"`
 	ProposedControls     []*ProposedControl `json:"proposedControl,omitempty" hcl:"proposed_control,block"`
 	Controls             []*Control         `json:"expandedControl,omitempty" hcl:"expanded_control,block"`
+	ControlImports       []string           `json:"-" hcl:"control_imports,optional"`
 }
 
 type ProposedControl struct {
@@ -147,9 +148,13 @@ type Threatmodel struct {
 }
 
 type Component struct {
-	ComponentType string `json:"componentType" hcl:"component_type,label"`
-	ComponentName string `json:"componentName" hcl:"component_name,label"`
-	Description   string `json:"description" hcl:"description,attr"`
+	ComponentType       string              `json:"componentType" hcl:"component_type,label"`
+	ComponentName       string              `json:"componentName" hcl:"component_name,label"`
+	Description         string              `json:"description" hcl:"description,attr"`
+	Implemented         bool                `json:"implemented,omitempty" hcl:"implemented,optional"`
+	ImplementationNotes string              `json:"implementationNotes,omitempty" hcl:"implementation_notes,optional"`
+	RiskReduction       int                 `json:"riskReduction,omitempty" hcl:"risk_reduction,optional"`
+	Attributes          []*ControlAttribute `json:"attribute,omitempty" hcl:"attribute,block"`
 }
 
 type Variable struct {
