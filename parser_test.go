@@ -9,12 +9,12 @@ import (
 )
 
 const (
-	tmTestValid = `spec_version = "0.0.3"
+	tmTestValid = `spec_version = "0.1.13"
 		threatmodel "test" {
 			author = "@xntrik"
 		}
 	`
-	tmTestValidJson = `{"spec_version": "0.0.3",
+	tmTestValidJson = `{"spec_version": "0.1.13",
     "threatmodel": {
 		  "test": {
 			  "author": "@xntrik"
@@ -215,6 +215,147 @@ func TestParseHCLFileWithImport(t *testing.T) {
 	}
 }
 
+func TestParseHCLFileWithExpandedControlImports(t *testing.T) {
+	defaultCfg := &ThreatmodelSpecConfig{}
+	defaultCfg.setDefaults()
+	tmParser := NewThreatmodelParser(defaultCfg)
+
+	err := tmParser.ParseHCLFile("./testdata/tm-with-expanded-controls.hcl", false)
+
+	if err != nil {
+		t.Errorf("Error parsing TM file with expanded control imports: %s", err)
+	}
+
+	foundLegacyControl := false
+	foundExpandedAuthControl := false
+	foundExpandedEncryptionControl := false
+	foundExpandedAccessControl := false
+
+	for _, tm := range tmParser.GetWrapped().Threatmodels {
+		if tm.Name == "test_expanded_controls" {
+			for _, threat := range tm.Threats {
+				// Check legacy control
+				if threat.Control == "Valid controls only" {
+					foundLegacyControl = true
+				}
+
+				// Check expanded controls
+				for _, control := range threat.Controls {
+					if control.Name == "auth_control" && control.Description == "Multi-factor authentication required" && control.Implemented == true {
+						foundExpandedAuthControl = true
+					}
+					if control.Name == "encryption_control" && control.Description == "Data encrypted at rest and in transit" && control.Implemented == false {
+						foundExpandedEncryptionControl = true
+					}
+					if control.Name == "access_control" && control.Description == "Role-based access control implemented" && control.Implemented == true {
+						foundExpandedAccessControl = true
+					}
+				}
+			}
+		}
+	}
+
+	if !foundLegacyControl {
+		t.Errorf("We didn't find the legacy imported control")
+	}
+
+	if !foundExpandedAuthControl {
+		t.Errorf("We didn't find the expanded authentication control")
+	}
+
+	if !foundExpandedEncryptionControl {
+		t.Errorf("We didn't find the expanded encryption control")
+	}
+
+	if !foundExpandedAccessControl {
+		t.Errorf("We didn't find the expanded access control")
+	}
+}
+
+func TestParseHCLFileWithControlImports(t *testing.T) {
+	defaultCfg := &ThreatmodelSpecConfig{}
+	defaultCfg.setDefaults()
+	tmParser := NewThreatmodelParser(defaultCfg)
+
+	err := tmParser.ParseHCLFile("./testdata/tm-with-control-import.hcl", false)
+
+	if err != nil {
+		t.Errorf("Error parsing TM file with control import: %s", err)
+	}
+
+	foundSingleImport := false
+	foundMultipleImports := false
+	foundMixedApproach := false
+
+	for _, tm := range tmParser.GetWrapped().Threatmodels {
+		if tm.Name == "test_control_import" {
+			for _, threat := range tm.Threats {
+				if threat.Description == "Test control import" {
+					// Should have 1 control from control_import
+					if len(threat.Controls) == 1 {
+						control := threat.Controls[0]
+						if control.Name == "authentication_control" &&
+							control.Description == "Multi-factor authentication required" &&
+							control.Implemented == true {
+							foundSingleImport = true
+						}
+					}
+				}
+
+				if threat.Description == "Test multiple control imports" {
+					// Should have 2 controls from control_import array
+					if len(threat.Controls) == 2 {
+						authFound := false
+						encFound := false
+						for _, control := range threat.Controls {
+							if control.Name == "authentication_control" {
+								authFound = true
+							}
+							if control.Name == "encryption_control" {
+								encFound = true
+							}
+						}
+						if authFound && encFound {
+							foundMultipleImports = true
+						}
+					}
+				}
+
+				if threat.Description == "Test mixed approach" {
+					// Should have 2 controls: 1 from control_import + 1 from expanded_control block
+					if len(threat.Controls) == 2 {
+						importFound := false
+						customFound := false
+						for _, control := range threat.Controls {
+							if control.Name == "access_control" {
+								importFound = true
+							}
+							if control.Name == "custom_control" {
+								customFound = true
+							}
+						}
+						if importFound && customFound {
+							foundMixedApproach = true
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if !foundSingleImport {
+		t.Errorf("We didn't find the single control import")
+	}
+
+	if !foundMultipleImports {
+		t.Errorf("We didn't find the multiple control imports")
+	}
+
+	if !foundMixedApproach {
+		t.Errorf("We didn't find the mixed approach")
+	}
+}
+
 func TestParseHCLFileWithMissingImport(t *testing.T) {
 	defaultCfg := &ThreatmodelSpecConfig{}
 	defaultCfg.setDefaults()
@@ -284,19 +425,19 @@ func TestParseHCLRaw(t *testing.T) {
 		},
 		{
 			"invalid_block",
-			"spec_version \"0.0.1\"",
+			"spec_version \"0.1.13\"",
 			"Invalid block definition",
 			true,
 		},
 		{
 			"invalid_number_literal",
-			"spec_version = 0.0.1\"",
+			"spec_version = 0.1.13\"",
 			"Invalid number literal",
 			true,
 		},
 		{
 			"invalid_spec_version",
-			"spec_veon = \"0.0.1\"",
+			"spec_veon = \"0.1.13\"",
 			"Unsupported argument; An argument named \"spec_veon\"",
 			true,
 		},
@@ -750,7 +891,7 @@ func TestParseJsonRaw(t *testing.T) {
 		},
 		{
 			"invalid_block",
-			"{spec_version: \"0.0.1\"}",
+			"{spec_version: \"0.1.13\"}",
 			"Invalid JSON keyword",
 			true,
 		},
