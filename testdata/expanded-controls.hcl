@@ -1,4 +1,4 @@
-spec_version = "0.1.13"
+spec_version = "0.1.14"
 
 component "control" "legacy_control" {
   description = "Valid controls only"
