@@ -14,6 +14,7 @@ require (
 	github.com/xntrik/go-dfd v0.1.3
 	github.com/zclconf/go-cty v1.17.0
 	github.com/zenizh/go-capturer v0.0.0-20211219060012-52ea6c8fed04
+	golang.org/x/text v0.29.0
 	gonum.org/v1/gonum v0.16.0
 )
 
@@ -90,7 +91,6 @@ require (
 	golang.org/x/oauth2 v0.31.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
-	golang.org/x/text v0.29.0 // indirect
 	golang.org/x/time v0.13.0 // indirect
 	golang.org/x/tools v0.37.0 // indirect
 	google.golang.org/api v0.251.0 // indirect

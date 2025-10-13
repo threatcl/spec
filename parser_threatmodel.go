@@ -12,7 +12,7 @@ import (
 
 func (tm *Threatmodel) Include(cfg *ThreatmodelSpecConfig, myfilename string) error {
 	if tm.Including == "" {
-		return fmt.Errorf("Empty Including")
+		return fmt.Errorf("empty including")
 	}
 
 	subParser, err := fetchRemoteTm(cfg, tm.Including, myfilename)
@@ -21,7 +21,7 @@ func (tm *Threatmodel) Include(cfg *ThreatmodelSpecConfig, myfilename string) er
 	}
 
 	if len(subParser.wrapped.Threatmodels) != 1 {
-		return fmt.Errorf("The included threat model file includes an incorrect number of threat models. Expected 1 but got %d", len(subParser.wrapped.Threatmodels))
+		return fmt.Errorf("the included threat model file includes an incorrect number of threat models. Expected 1 but got %d", len(subParser.wrapped.Threatmodels))
 	}
 
 	subTm := &subParser.wrapped.Threatmodels[0]
@@ -78,7 +78,7 @@ func (tm *Threatmodel) addInfoIfNotExist(newIa InformationAsset) {
 		}
 	}
 
-	if assetFound == false {
+	if !assetFound {
 		tm.InformationAssets = append(tm.InformationAssets, &newIa)
 	}
 
@@ -93,7 +93,7 @@ func (tm *Threatmodel) addTpdIfNotExist(newTpd ThirdPartyDependency) {
 		}
 	}
 
-	if tpdFound == false {
+	if !tpdFound {
 		tm.ThirdPartyDependencies = append(tm.ThirdPartyDependencies, &newTpd)
 	}
 
@@ -108,7 +108,7 @@ func (tm *Threatmodel) addUcIfNotExist(newUc UseCase) {
 		}
 	}
 
-	if ucFound == false {
+	if !ucFound {
 		tm.UseCases = append(tm.UseCases, &newUc)
 	}
 }
@@ -122,7 +122,7 @@ func (tm *Threatmodel) addExclIfNotExist(newExcl Exclusion) {
 		}
 	}
 
-	if exFound == false {
+	if !exFound {
 		tm.Exclusions = append(tm.Exclusions, &newExcl)
 	}
 }
@@ -136,7 +136,7 @@ func (tm *Threatmodel) addTIfNotExist(newT Threat) {
 		}
 	}
 
-	if tFound == false {
+	if !tFound {
 		tm.Threats = append(tm.Threats, &newT)
 	}
 }
@@ -150,7 +150,7 @@ func (tm *Threatmodel) addDfdIfNotExist(newDfd DataFlowDiagram) {
 		}
 	}
 
-	if dfdFound == false {
+	if !dfdFound {
 		tm.DataFlowDiagrams = append(tm.DataFlowDiagrams, &newDfd)
 	}
 }
@@ -253,7 +253,7 @@ func (tm *Threatmodel) validateInformationAssetRef(asset string) error {
 	return nil
 }
 
-func (tm *Threatmodel) shiftLegacyDfd() (error, int) {
+func (tm *Threatmodel) shiftLegacyDfd() (int, error) {
 	if tm.LegacyDfd != nil {
 		newDfd := &DataFlowDiagram{
 			Name:              "Legacy DFD",
@@ -268,9 +268,9 @@ func (tm *Threatmodel) shiftLegacyDfd() (error, int) {
 		tm.LegacyDfd = nil
 		tm.DataFlowDiagrams = append(tm.DataFlowDiagrams, newDfd)
 
-		return nil, 1
+		return 1, nil
 	}
-	return nil, 0
+	return 0, nil
 }
 
 func (tm *Threatmodel) ValidateTm(p *ThreatmodelParser) error {

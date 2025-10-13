@@ -53,10 +53,15 @@ func (p *ThreatmodelParser) GetWrapped() *ThreatmodelWrapped {
 }
 
 func (p *ThreatmodelParser) HclString() string {
+	for _, tm := range p.wrapped.Threatmodels {
+		for _, threat := range tm.Threats {
+			threat.ControlImports = nil
+		}
+	}
 	hclOut := hclwrite.NewEmptyFile()
 	gohcl.EncodeIntoBody(p.wrapped, hclOut.Body())
 
-	return fmt.Sprintf("%s", hclOut.Bytes())
+	return string(hclOut.Bytes())
 }
 
 func (p *ThreatmodelParser) AddTMAndWrite(tm Threatmodel, f io.Writer, debug bool) error {
@@ -91,7 +96,7 @@ func (p *ThreatmodelParser) validateTms() error {
 
 	newWrapped := []Threatmodel{}
 	for _, t := range p.wrapped.Threatmodels {
-		err, _ := t.shiftLegacyDfd()
+		_, err := t.shiftLegacyDfd()
 		if err != nil {
 			errMap = multierror.Append(errMap, fmt.Errorf(
 				"TM '%s': error shifting legacy DFD: %s", t.Name, err))
@@ -106,7 +111,7 @@ func (p *ThreatmodelParser) validateTms() error {
 		// Validating unique threatmodel name
 		if _, ok := tmMap[t.Name]; ok {
 			errMap = multierror.Append(errMap, fmt.Errorf(
-				"TM '%s': duplicate found.",
+				"TM '%s': duplicate found",
 				t.Name,
 			))
 		}
@@ -188,8 +193,8 @@ func extractVars(f *hcl.File) (map[string]string, error) {
 
 func (p *ThreatmodelParser) buildVarCtx(ctx *hcl.EvalContext, varMap map[string]string) error {
 
-	var varMapOut map[string]cty.Value
-	varMapOut = make(map[string]cty.Value)
+	// var varMapOut map[string]cty.Value
+	varMapOut := make(map[string]cty.Value)
 
 	for k, v := range varMap {
 		varMapOut[k] = cty.StringVal(v)
@@ -357,9 +362,9 @@ func (p *ThreatmodelParser) parseHCL(f *hcl.File, filename string, isChild bool)
 		}
 	}
 
-	var diags hcl.Diagnostics
+	// var diags hcl.Diagnostics
 
-	diags = gohcl.DecodeBody(f.Body, ctx, p.wrapped)
+	diags := gohcl.DecodeBody(f.Body, ctx, p.wrapped)
 
 	if diags.HasErrors() {
 		return diags
@@ -496,7 +501,7 @@ func (p *ThreatmodelParser) ParseFile(filename string, isChild bool) error {
 			return err
 		}
 	} else {
-		return fmt.Errorf("File isn't HCL or JSON")
+		return fmt.Errorf("file isn't HCL or JSON")
 	}
 
 	for i := 0; i < len(p.wrapped.Threatmodels); i++ {
