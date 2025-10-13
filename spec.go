@@ -60,9 +60,9 @@ type UptimeDependencyClassification string
 
 const (
 	NoneUptime        UptimeDependencyClassification = "none"
-	DegradedUptime                                   = "degraded"
-	HardUptime                                       = "hard"
-	OperationalUptime                                = "operational"
+	DegradedUptime    UptimeDependencyClassification = "degraded"
+	HardUptime        UptimeDependencyClassification = "hard"
+	OperationalUptime UptimeDependencyClassification = "operational"
 )
 
 type ThirdPartyDependency struct {

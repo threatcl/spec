@@ -81,13 +81,13 @@ func TestRenderMarkdownInvalid(t *testing.T) {
 
 	_, err := tm.RenderMarkdown("{{.Name")
 
-	if err != nil && !strings.Contains(err.Error(), "Error parsing template") {
+	if err != nil && !strings.Contains(err.Error(), "error parsing template") {
 		t.Errorf("Error parsing template: %s", err)
 	}
 
 	_, err = tm.RenderMarkdown("{{nil}}")
 
-	if err != nil && !strings.Contains(err.Error(), "Error executing template") {
+	if err != nil && !strings.Contains(err.Error(), "error executing template") {
 		t.Errorf("Error executing template: %s", err)
 	}
 

@@ -47,7 +47,7 @@ func TestNewTMParser(t *testing.T) {
 
 	tmParser.wrapped = tmw
 
-	out = capturer.CaptureStdout(func() {
+	_ = capturer.CaptureStdout(func() {
 		tmParser.validateSpec("blop")
 	})
 

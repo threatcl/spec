@@ -2,33 +2,48 @@ package spec
 
 import (
 	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func (p *ThreatmodelParser) normalizeInitiativeSize(in string) string {
-	if p.initiativeSizeOptions[strings.Title(strings.ToLower(in))] {
-		return strings.Title(strings.ToLower(in))
+	// if p.initiativeSizeOptions[strings.Title(strings.ToLower(in))] {
+	// 	return strings.Title(strings.ToLower(in))
+	// }
+	if p.initiativeSizeOptions[cases.Title(language.English).String(strings.ToLower(in))] {
+		return cases.Title(language.English).String(strings.ToLower(in))
 	}
 
 	return p.defaultInitiativeSize
 }
 
 func (p *ThreatmodelParser) normalizeInfoClassification(in string) string {
-	if p.infoClassifications[strings.Title(strings.ToLower(in))] {
-		return strings.Title(strings.ToLower(in))
+	// if p.infoClassifications[strings.Title(strings.ToLower(in))] {
+	// 	return strings.Title(strings.ToLower(in))
+	// }
+	if p.infoClassifications[cases.Title(language.English).String(strings.ToLower(in))] {
+		return cases.Title(language.English).String(strings.ToLower(in))
 	}
 	return p.defaultInfoClassification
 }
 
 func (p *ThreatmodelParser) normalizeImpactType(in string) string {
-	if p.impactTypes[strings.Title(strings.ToLower(in))] {
-		return strings.Title(strings.ToLower(in))
+	// if p.impactTypes[strings.Title(strings.ToLower(in))] {
+	// 	return strings.Title(strings.ToLower(in))
+	// }
+	if p.impactTypes[cases.Title(language.English).String(strings.ToLower(in))] {
+		return cases.Title(language.English).String(strings.ToLower(in))
 	}
 	return ""
 }
 
 func (p *ThreatmodelParser) normalizeStride(in string) string {
-	if p.strideElements[strings.Title(strings.ToLower(in))] {
-		return strings.Title(strings.ToLower(in))
+	// if p.strideElements[strings.Title(strings.ToLower(in))] {
+	// 	return strings.Title(strings.ToLower(in))
+	// }
+	if p.strideElements[cases.Title(language.English).String(strings.ToLower(in))] {
+		return cases.Title(language.English).String(strings.ToLower(in))
 	}
 	return ""
 }

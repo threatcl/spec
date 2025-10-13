@@ -21,12 +21,12 @@ func (tm *Threatmodel) RenderMarkdown(mdTemplate string) (io.Reader, error) { //
 
 	tmpl, err := ParseTMTemplate(mdTemplate)
 	if err != nil {
-		return mdBuffer, fmt.Errorf("Error parsing template: %w", err)
+		return mdBuffer, fmt.Errorf("error parsing template: %w", err)
 	}
 
 	err = tmpl.Execute(mdBuffer, tm)
 	if err != nil {
-		return mdBuffer, fmt.Errorf("Error executing template: %w", err)
+		return mdBuffer, fmt.Errorf("error executing template: %w", err)
 	}
 	return mdBuffer, nil
 }

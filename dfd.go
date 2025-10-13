@@ -64,7 +64,7 @@ func (d *DataFlowDiagram) GenerateDfdSvg(filepath, tmName string) error {
 	return nil
 }
 
-func newDfdProcess(name string) (error, *dfd.Process) {
+func newDfdProcess(name string) (*dfd.Process, error) {
 
 	newProcess := dfd.NewProcess(name)
 
@@ -82,10 +82,10 @@ func newDfdProcess(name string) (error, *dfd.Process) {
 		Value: "filled",
 	})
 
-	return err, newProcess
+	return newProcess, err
 }
 
-func newDfdExternalEntity(name string) (error, *dfd.ExternalService) {
+func newDfdExternalEntity(name string) (*dfd.ExternalService, error) {
 	newEntity := dfd.NewExternalService(name)
 
 	// @BUG: The styling below doesn't work for go-graphviz generated images
@@ -102,20 +102,20 @@ func newDfdExternalEntity(name string) (error, *dfd.ExternalService) {
 		Key:   "style",
 		Value: "filled",
 	})
-	return err, newEntity
+	return newEntity, err
 }
 
-func newDfdStore(name string) (error, *dfd.DataStore) {
+func newDfdStore(name string) (*dfd.DataStore, error) {
 	newStore := dfd.NewDataStore(name)
 	err := newStore.SetAttribute(encoding.Attribute{
 		Key:   "style",
 		Value: "filled",
 	})
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 
-	return err, newStore
+	return newStore, err
 }
 
 func (d *DataFlowDiagram) generateDfdDotFile(filepath, tmName string) (string, error) {
@@ -139,7 +139,7 @@ func (d *DataFlowDiagram) generateDfdDotFile(filepath, tmName string) (string, e
 
 		// Add Processes from inside zone
 		for _, process := range zone.Processes {
-			err, newProcess := newDfdProcess(process.Name)
+			newProcess, err := newDfdProcess(process.Name)
 			if err != nil {
 				return "", err
 			}
@@ -149,7 +149,7 @@ func (d *DataFlowDiagram) generateDfdDotFile(filepath, tmName string) (string, e
 
 		// Add External Elements from inside zone
 		for _, external_element := range zone.ExternalElements {
-			err, newElement := newDfdExternalEntity(external_element.Name)
+			newElement, err := newDfdExternalEntity(external_element.Name)
 			if err != nil {
 				return "", err
 			}
@@ -159,7 +159,7 @@ func (d *DataFlowDiagram) generateDfdDotFile(filepath, tmName string) (string, e
 
 		// Add Data Stores from inside zone
 		for _, data_store := range zone.DataStores {
-			err, newStore := newDfdStore(data_store.Name)
+			newStore, err := newDfdStore(data_store.Name)
 			if err != nil {
 				return "", err
 			}
@@ -171,7 +171,7 @@ func (d *DataFlowDiagram) generateDfdDotFile(filepath, tmName string) (string, e
 
 	// Add Processes
 	for _, process := range d.Processes {
-		err, newProcess := newDfdProcess(process.Name)
+		newProcess, err := newDfdProcess(process.Name)
 		if err != nil {
 			return "", err
 		}
@@ -194,7 +194,7 @@ func (d *DataFlowDiagram) generateDfdDotFile(filepath, tmName string) (string, e
 
 	// Add External Elements
 	for _, external_element := range d.ExternalElements {
-		err, newElement := newDfdExternalEntity(external_element.Name)
+		newElement, err := newDfdExternalEntity(external_element.Name)
 		if err != nil {
 			return "", err
 		}
@@ -217,7 +217,7 @@ func (d *DataFlowDiagram) generateDfdDotFile(filepath, tmName string) (string, e
 
 	// Add Data Stores
 	for _, data_store := range d.DataStores {
-		err, newStore := newDfdStore(data_store.Name)
+		newStore, err := newDfdStore(data_store.Name)
 		if err != nil {
 			return "", err
 		}
