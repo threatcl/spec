@@ -370,7 +370,8 @@ func (p *ThreatmodelParser) parseHCL(f *hcl.File, filename string, isChild bool)
 		return diags
 	}
 
-	p.validateSpec(filename)
+	// @TODO: This has been commented out to not print to STDOUT - it should be wrapped in a DEBUG flag
+	// p.validateSpec(filename)
 
 	// Process control imports after parsing
 	err := p.processControlImports(ctx)
