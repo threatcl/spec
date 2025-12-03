@@ -3,7 +3,6 @@ package spec
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/goccy/go-graphviz"
@@ -13,7 +12,7 @@ import (
 )
 
 func (d *DataFlowDiagram) GenerateDot(tmName string) (string, error) {
-	tmpFile, err := ioutil.TempFile("", "dot")
+	tmpFile, err := os.CreateTemp("", "dot")
 	if err != nil {
 		return "", err
 	}
@@ -27,7 +26,7 @@ func (d *DataFlowDiagram) GenerateDot(tmName string) (string, error) {
 }
 
 func (d *DataFlowDiagram) GenerateDfdPng(filepath, tmName string) error {
-	tmpFile, err := ioutil.TempFile("", "dfd")
+	tmpFile, err := os.CreateTemp("", "dfd")
 	if err != nil {
 		return err
 	}
@@ -43,7 +42,7 @@ func (d *DataFlowDiagram) GenerateDfdPng(filepath, tmName string) error {
 }
 
 func (d *DataFlowDiagram) GenerateDfdSvg(filepath, tmName string) error {
-	tmpFile, err := ioutil.TempFile("", "dfd")
+	tmpFile, err := os.CreateTemp("", "dfd")
 	if err != nil {
 		return err
 	}
@@ -311,7 +310,7 @@ func dotToPng(raw []byte, file string) error {
 }
 
 func (d *DataFlowDiagram) GenerateDfdPngBytes(tmName string) ([]byte, error) {
-	tmpFile, err := ioutil.TempFile("", "dfd")
+	tmpFile, err := os.CreateTemp("", "dfd")
 	if err != nil {
 		return nil, err
 	}

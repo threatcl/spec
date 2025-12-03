@@ -2,7 +2,7 @@ package spec
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -158,7 +158,7 @@ func (tm *Threatmodel) addDfdIfNotExist(newDfd DataFlowDiagram) {
 func fetchRemoteTm(cfg *ThreatmodelSpecConfig, source, currentFilename string) (*ThreatmodelParser, error) {
 	returnParser := NewThreatmodelParser(cfg)
 
-	tmpDir, err := ioutil.TempDir("", "hcltm")
+	tmpDir, err := os.MkdirTemp("", "hcltm")
 	if err != nil {
 		return nil, err
 	}
