@@ -5,6 +5,7 @@
 CHANGES:
 
 * Major version update to support the following:
+    * Split DFD CGO requirements
     * Threats have names
     * Expanded controls are just `control`
 
