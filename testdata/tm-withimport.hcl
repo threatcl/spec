@@ -1,10 +1,10 @@
- spec_version = "0.1.15"
+ spec_version = "0.1.17"
 
  threatmodel "test" {
    imports = ["subfolder/othercontrols.hcl", "controls.hcl"]
    author = "@xntrik"
 
-   threat {
+   threat "test_threat" {
      description = "words"
 
      control = import.control.another_control_name.description
@@ -29,7 +29,7 @@ EOT
    diagram_link = "https://somelink"
    author = "@xntrik"
 
-   threat {
+   threat "multiline_threat_1" {
      description = <<EOT
 This is a multi line set of input
 
@@ -39,7 +39,7 @@ EOT
      control = import.control.control_name.description
   }
 
-   threat {
+   threat "multiline_threat_2" {
      description = <<EOT
 This is a multi line set of input
 EOT

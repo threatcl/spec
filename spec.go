@@ -19,13 +19,15 @@ type InformationAsset struct {
 }
 
 type Threat struct {
+	Name                 string             `json:"name" hcl:"name,label"`
 	ImpactType           []string           `json:"impacts,omitempty" hcl:"impacts,optional"`
 	Description          string             `json:"description" hcl:"description,attr"`
 	Control              string             `json:"control,omitempty" hcl:"control,optional"`
 	Stride               []string           `json:"stride,omitempty" hcl:"stride,optional"`
 	InformationAssetRefs []string           `json:"informationAssetRefs,omitempty" hcl:"information_asset_refs,optional"`
 	ProposedControls     []*ProposedControl `json:"proposedControl,omitempty" hcl:"proposed_control,block"`
-	Controls             []*Control         `json:"expandedControl,omitempty" hcl:"expanded_control,block"`
+	Controls             []*Control         `json:"control,omitempty" hcl:"control,block"`
+	ExpandedControls     []*Control         `json:"expandedControl,omitempty" hcl:"expanded_control,block"`
 	ControlImports       []string           `json:"-" hcl:"control_imports,optional"`
 }
 

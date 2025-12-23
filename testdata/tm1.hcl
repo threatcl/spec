@@ -1,4 +1,4 @@
- spec_version = "0.1.15"
+ spec_version = "0.1.17"
 
  threatmodel "tm1 one" {
    description = <<EOT
@@ -17,7 +17,7 @@ EOT
    diagram_link = "https://somelink"
    author = "@xntrik"
 
-   threat {
+   threat "multiline_threat_1" {
      description = <<EOT
 This is a multi line set of input
 
@@ -26,7 +26,7 @@ EOT
      impacts = ["Confidentiality", "Availability"]
   }
 
-   threat {
+   threat "multiline_threat_2" {
      description = <<EOT
 This is a multi line set of input
 EOT

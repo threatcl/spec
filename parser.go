@@ -279,8 +279,8 @@ func (p *ThreatmodelParser) buildCtx(ctx *hcl.EvalContext, imports []string, par
 			}
 
 			// Route to appropriate import path based on component type
-			if c.ComponentType == "expanded_control" {
-				// For expanded_control, add all optional fields
+			if c.ComponentType == "control" || c.ComponentType == "expanded_control" {
+				// For control/expanded_control, add all optional fields
 				controlObj["implemented"] = cty.BoolVal(c.Implemented)
 
 				if c.ImplementationNotes != "" {
@@ -304,7 +304,7 @@ func (p *ThreatmodelParser) buildCtx(ctx *hcl.EvalContext, imports []string, par
 
 				expandedControls[c.ComponentName] = cty.ObjectVal(controlObj)
 			} else {
-				// For regular control, only description is available
+				// For other component types, only description is available
 				controls[c.ComponentName] = cty.ObjectVal(controlObj)
 			}
 		}
@@ -398,6 +398,11 @@ func (p *ThreatmodelParser) processControlImports(ctx *hcl.EvalContext) error {
 	for i := range p.wrapped.Threatmodels {
 		tm := &p.wrapped.Threatmodels[i]
 		for _, threat := range tm.Threats {
+			// Merge deprecated ExpandedControls into Controls for backward compatibility
+			if len(threat.ExpandedControls) > 0 {
+				threat.Controls = append(threat.Controls, threat.ExpandedControls...)
+			}
+
 			if len(threat.ControlImports) > 0 {
 				// Process each control import
 				for _, controlImport := range threat.ControlImports {
@@ -416,14 +421,14 @@ func (p *ThreatmodelParser) processControlImports(ctx *hcl.EvalContext) error {
 
 // resolveControlImport resolves a control import reference from the import context
 func (p *ThreatmodelParser) resolveControlImport(controlImport string, ctx *hcl.EvalContext) (*Control, error) {
-	// Parse the control import (e.g., "import.expanded_control.authentication_control")
+	// Parse the control import (e.g., "import.control.authentication_control" or "import.expanded_control.authentication_control")
 	parts := strings.Split(controlImport, ".")
 	if len(parts) != 3 || parts[0] != "import" {
-		return nil, fmt.Errorf("invalid control import format: %s (expected: import.expanded_control.control_name)", controlImport)
+		return nil, fmt.Errorf("invalid control import format: %s (expected: import.control.control_name or import.expanded_control.control_name)", controlImport)
 	}
 
-	if parts[1] != "expanded_control" {
-		return nil, fmt.Errorf("unsupported control type: %s (only expanded_control is supported)", parts[1])
+	if parts[1] != "control" && parts[1] != "expanded_control" {
+		return nil, fmt.Errorf("unsupported control type: %s (only 'control' and 'expanded_control' are supported)", parts[1])
 	}
 
 	controlName := parts[2]
@@ -434,9 +439,10 @@ func (p *ThreatmodelParser) resolveControlImport(controlImport string, ctx *hcl.
 		return nil, fmt.Errorf("no imports available")
 	}
 
+	// Try to get from expanded_control namespace (both "control" and "expanded_control" map to the same namespace)
 	expandedControlsVal := importVal.GetAttr("expanded_control")
 	if expandedControlsVal.IsNull() {
-		return nil, fmt.Errorf("no expanded_control imports available")
+		return nil, fmt.Errorf("no control imports available")
 	}
 
 	controlVal := expandedControlsVal.GetAttr(controlName)
