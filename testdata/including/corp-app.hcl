@@ -1,4 +1,4 @@
-spec_version = "0.1.15"
+spec_version = "0.1.17"
 
 threatmodel "Tower of London" {
 
@@ -19,7 +19,7 @@ threatmodel "Tower of London" {
     description = "another uc perhaps"
   }
 
-  threat {
+  threat "deface_crown" {
     description = "Someone who isn't the Queen defaces the crown"
     impacts = ["Confidentiality"]
     control = "Lots of guards"
@@ -32,7 +32,7 @@ threatmodel "Tower of France" {
   author = "@xntrik"
   link = "har"
 
-  threat {
+  threat "deface_crown_france" {
     description = "Someone who isn't the Queen defaces the crown"
     impacts = ["Confidentiality"]
     control = "Lots of guards"

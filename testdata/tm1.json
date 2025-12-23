@@ -1,5 +1,5 @@
 {
-  "spec_version": "0.1.15",
+  "spec_version": "0.2.0",
 
   "threatmodel": {
     "Tower of London": {
@@ -26,9 +26,11 @@
         }
       },
       "threat": {
-        "description": "Someone who isn't the Queen steals the crown",
-        "impacts": ["Confidentiality"],
-        "control": "Lots of guards"
+        "crown_theft": {
+          "description": "Someone who isn't the Queen steals the crown",
+          "impacts": ["Confidentiality"],
+          "control": "Lots of guards"
+        }
       }
     },
 
@@ -50,9 +52,11 @@
         "description": "Only the correct people can access the gold"
       },
       "threat": {
-        "description": "Someone steals the gold",
-        "impacts": ["Confidentiality"],
-        "control": "Big walls"
+        "gold_theft": {
+          "description": "Someone steals the gold",
+          "impacts": ["Confidentiality"],
+          "control": "Big walls"
+        }
       }
     }
   }

@@ -9,12 +9,12 @@ import (
 )
 
 const (
-	tmTestValid = `spec_version = "0.1.15"
+	tmTestValid = `spec_version = "0.2.0"
 		threatmodel "test" {
 			author = "@xntrik"
 		}
 	`
-	tmTestValidJson = `{"spec_version": "0.1.15",
+	tmTestValidJson = `{"spec_version": "0.2.0",
     "threatmodel": {
 		  "test": {
 			  "author": "@xntrik"
@@ -425,19 +425,19 @@ func TestParseHCLRaw(t *testing.T) {
 		},
 		{
 			"invalid_block",
-			"spec_version \"0.1.15\"",
+			"spec_version \"0.2.0\"",
 			"Invalid block definition",
 			true,
 		},
 		{
 			"invalid_number_literal",
-			"spec_version = 0.1.15\"",
+			"spec_version = 0.2.0\"",
 			"Invalid number literal",
 			true,
 		},
 		{
 			"invalid_spec_version",
-			"spec_veon = \"0.1.15\"",
+			"spec_veon = \"0.2.0\"",
 			"Unsupported argument; An argument named \"spec_veon\"",
 			true,
 		},
@@ -466,7 +466,7 @@ func TestParseHCLRaw(t *testing.T) {
 			"invalid_tminfoassetref",
 			`threatmodel "test" {
 		author = "j"
-		threat {
+		threat "test_threat" {
 			description = "threat"
 			information_asset_refs = ["nope"]
 		}
@@ -480,7 +480,7 @@ func TestParseHCLRaw(t *testing.T) {
 			`threatmodel "test" {
 		author = "j"
 		information_asset "asset" {information_classification = "Public"}
-		threat {
+		threat "test_threat" {
 			description = "threat"
 			information_asset_refs = ["nope"]
 		}
@@ -538,7 +538,7 @@ func TestParseHCLRaw(t *testing.T) {
 			}
 			threatmodel "test" {
 			author = "j"
-			threat {
+			threat "test_threat" {
 			  description = var.test_var
 			}
 			}`,
@@ -553,7 +553,7 @@ func TestParseHCLRaw(t *testing.T) {
 			}
 			threatmodel "test" {
 			author = "j"
-			threat {
+			threat "test_threat" {
 			  description = "var.test_var"
 			}
 			}`,
@@ -581,7 +581,7 @@ func TestParseHCLRaw(t *testing.T) {
 			 value = "test_var_val"
 			}
 			author = "j"
-			threat {
+			threat "test_threat" {
 			  description = var.test_var
 			}
 			}`,
@@ -891,7 +891,7 @@ func TestParseJsonRaw(t *testing.T) {
 		},
 		{
 			"invalid_block",
-			"{spec_version: \"0.1.15\"}",
+			"{spec_version: \"0.2.0\"}",
 			"Invalid JSON keyword",
 			true,
 		},
