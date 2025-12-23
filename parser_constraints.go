@@ -62,6 +62,26 @@ func (c *proposedControlToBlock) tmCheck(tm *Threatmodel) bool {
 	return false
 }
 
+type expandedControlToControl struct{}
+
+func (c *expandedControlToControl) asOf() string {
+	return "0.1.17"
+}
+func (c *expandedControlToControl) verConstraint() string {
+	return ">= 0.0.1"
+}
+func (c *expandedControlToControl) msg() string {
+	return "Deprecation warning: This threat model has defined `expanded_control` block(s) inside of `threat` blocks. As of v0.1.17 it is recommended that you update these to `control` blocks, as they may cause errors in future versions of hcltm."
+}
+func (c *expandedControlToControl) tmCheck(tm *Threatmodel) bool {
+	for _, t := range tm.Threats {
+		if len(t.ExpandedControls) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
 type multiDfd struct{}
 
 func (c *multiDfd) asOf() string {
@@ -86,6 +106,7 @@ func VersionConstraints(tmw *ThreatmodelWrapped, emit bool) (string, error) {
 	hcltmConstraints := make(map[string]hcltmConstraint)
 	hcltmConstraints["control_string_to_block"] = &controlStringToBlock{}
 	hcltmConstraints["proposed_control_to_block"] = &proposedControlToBlock{}
+	hcltmConstraints["expanded_control_to_control"] = &expandedControlToControl{}
 	hcltmConstraints["multi_dfd"] = &multiDfd{}
 
 	for _, cval := range hcltmConstraints {

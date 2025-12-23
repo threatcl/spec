@@ -1,4 +1,4 @@
- spec_version = "0.1.15"
+ spec_version = "0.1.17"
 
  threatmodel "tm1 one" {
    description = <<EOT
@@ -7,7 +7,7 @@ This is some arbitrary text
 EOT
    author = "@xntrik"
 
-   threat {
+   threat "multiline_threat_1" {
      description = <<EOT
 This is a multi line set of input
 
