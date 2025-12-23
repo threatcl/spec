@@ -37,17 +37,17 @@ type ProposedControl struct {
 }
 
 type Control struct {
-	Name                string              `json:"name" hcl:"name,label"`
-	Implemented         bool                `json:"implemented,omitempty" hcl:"implemented,optional"`
-	Description         string              `json:"description" hcl:"description"`
-	ImplementationNotes string              `json:"implementationNotes,omitempty" hcl:"implementation_notes,optional"`
-	RiskReduction       int                 `json:"riskReduction,omitempty" hcl:"risk_reduction,optional"`
-	Attributes          []*ControlAttribute `json:"attribute,omitempty" hcl:"attribute,block"`
+	Name                string              `json:"name" hcl:"name,label" cty:"name"`
+	Implemented         bool                `json:"implemented,omitempty" hcl:"implemented,optional" cty:"implemented"`
+	Description         string              `json:"description" hcl:"description" cty:"description"`
+	ImplementationNotes string              `json:"implementationNotes,omitempty" hcl:"implementation_notes,optional" cty:"implementation_notes"`
+	RiskReduction       int                 `json:"riskReduction,omitempty" hcl:"risk_reduction,optional" cty:"risk_reduction"`
+	Attributes          []*ControlAttribute `json:"attribute,omitempty" hcl:"attribute,block" cty:"attribute"`
 }
 
 type ControlAttribute struct {
-	Name  string `json:"name" hcl:"name,label"`
-	Value string `json:"value" hcl:"value"`
+	Name  string `json:"name" hcl:"name,label" cty:"name"`
+	Value string `json:"value" hcl:"value" cty:"value"`
 }
 
 type UseCase struct {

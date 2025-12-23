@@ -466,7 +466,7 @@ func TestParseHCLRaw(t *testing.T) {
 			"invalid_tminfoassetref",
 			`threatmodel "test" {
 		author = "j"
-		threat {
+		threat "test_threat" {
 			description = "threat"
 			information_asset_refs = ["nope"]
 		}
@@ -480,7 +480,7 @@ func TestParseHCLRaw(t *testing.T) {
 			`threatmodel "test" {
 		author = "j"
 		information_asset "asset" {information_classification = "Public"}
-		threat {
+		threat "test_threat" {
 			description = "threat"
 			information_asset_refs = ["nope"]
 		}
@@ -538,7 +538,7 @@ func TestParseHCLRaw(t *testing.T) {
 			}
 			threatmodel "test" {
 			author = "j"
-			threat {
+			threat "test_threat" {
 			  description = var.test_var
 			}
 			}`,
@@ -553,7 +553,7 @@ func TestParseHCLRaw(t *testing.T) {
 			}
 			threatmodel "test" {
 			author = "j"
-			threat {
+			threat "test_threat" {
 			  description = "var.test_var"
 			}
 			}`,
@@ -581,7 +581,7 @@ func TestParseHCLRaw(t *testing.T) {
 			 value = "test_var_val"
 			}
 			author = "j"
-			threat {
+			threat "test_threat" {
 			  description = var.test_var
 			}
 			}`,

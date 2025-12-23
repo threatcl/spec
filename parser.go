@@ -279,8 +279,32 @@ func (p *ThreatmodelParser) buildCtx(ctx *hcl.EvalContext, imports []string, par
 			}
 
 			// Route to appropriate import path based on component type
-			if c.ComponentType == "control" || c.ComponentType == "expanded_control" {
-				// For control/expanded_control, add all optional fields
+			if c.ComponentType == "control" {
+				// For control type, add all optional fields and route to controls map
+				controlObj["implemented"] = cty.BoolVal(c.Implemented)
+
+				if c.ImplementationNotes != "" {
+					controlObj["implementation_notes"] = cty.StringVal(c.ImplementationNotes)
+				} else {
+					controlObj["implementation_notes"] = cty.StringVal("")
+				}
+
+				controlObj["risk_reduction"] = cty.NumberIntVal(int64(c.RiskReduction))
+
+				// Handle control attributes
+				if len(c.Attributes) > 0 {
+					attributes := make(map[string]cty.Value)
+					for _, attr := range c.Attributes {
+						attributes[attr.Name] = cty.StringVal(attr.Value)
+					}
+					controlObj["attribute"] = cty.ObjectVal(attributes)
+				} else {
+					controlObj["attribute"] = cty.ObjectVal(map[string]cty.Value{})
+				}
+
+				controls[c.ComponentName] = cty.ObjectVal(controlObj)
+			} else if c.ComponentType == "expanded_control" {
+				// For expanded_control type (deprecated), add all optional fields and route to expanded_controls map
 				controlObj["implemented"] = cty.BoolVal(c.Implemented)
 
 				if c.ImplementationNotes != "" {
@@ -431,6 +455,7 @@ func (p *ThreatmodelParser) resolveControlImport(controlImport string, ctx *hcl.
 		return nil, fmt.Errorf("unsupported control type: %s (only 'control' and 'expanded_control' are supported)", parts[1])
 	}
 
+	controlType := parts[1]
 	controlName := parts[2]
 
 	// Get the control from the import context
@@ -439,13 +464,13 @@ func (p *ThreatmodelParser) resolveControlImport(controlImport string, ctx *hcl.
 		return nil, fmt.Errorf("no imports available")
 	}
 
-	// Try to get from expanded_control namespace (both "control" and "expanded_control" map to the same namespace)
-	expandedControlsVal := importVal.GetAttr("expanded_control")
-	if expandedControlsVal.IsNull() {
-		return nil, fmt.Errorf("no control imports available")
+	// Get from the appropriate namespace based on the control type specified
+	controlsVal := importVal.GetAttr(controlType)
+	if controlsVal.IsNull() {
+		return nil, fmt.Errorf("no %s imports available", controlType)
 	}
 
-	controlVal := expandedControlsVal.GetAttr(controlName)
+	controlVal := controlsVal.GetAttr(controlName)
 	if controlVal.IsNull() {
 		return nil, fmt.Errorf("control '%s' not found in imports", controlName)
 	}
