@@ -131,7 +131,7 @@ func (tm *Threatmodel) addTIfNotExist(newT Threat) {
 
 	tFound := false
 	for _, t := range tm.Threats {
-		if newT.Description == t.Description {
+		if newT.Name == t.Name {
 			tFound = true
 		}
 	}
