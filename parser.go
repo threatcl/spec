@@ -466,8 +466,18 @@ func (p *ThreatmodelParser) resolveControlImport(controlImport string, ctx *hcl.
 
 	// Get from the appropriate namespace based on the control type specified
 	controlsVal := importVal.GetAttr(controlType)
-	if controlsVal.IsNull() {
-		return nil, fmt.Errorf("no %s imports available", controlType)
+	isEmpty := controlsVal.IsNull() || (controlsVal.Type().IsObjectType() && len(controlsVal.Type().AttributeTypes()) == 0)
+	if isEmpty {
+		// Backward compatibility: if expanded_control doesn't exist, try control
+		if controlType == "expanded_control" {
+			controlsVal = importVal.GetAttr("control")
+			isEmpty = controlsVal.IsNull() || (controlsVal.Type().IsObjectType() && len(controlsVal.Type().AttributeTypes()) == 0)
+			if isEmpty {
+				return nil, fmt.Errorf("no %s or control imports available", controlType)
+			}
+		} else {
+			return nil, fmt.Errorf("no %s imports available", controlType)
+		}
 	}
 
 	controlVal := controlsVal.GetAttr(controlName)
