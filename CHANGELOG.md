@@ -1,3 +1,11 @@
+## 0.2.3
+
+### Dec 24, 2025
+
+CHANGES:
+
+* Threats are validated to have unique names, not descriptions
+
 ## 0.2.2
 
 ### Dec 24, 2025

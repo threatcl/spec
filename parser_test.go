@@ -921,3 +921,101 @@ func TestParseJsonRaw(t *testing.T) {
 		})
 	}
 }
+
+func TestThreatDeduplicationBaseFile(t *testing.T) {
+	// First verify the base file parses correctly on its own
+	defaultCfg := &ThreatmodelSpecConfig{}
+	defaultCfg.setDefaults()
+	tmParser := NewThreatmodelParser(defaultCfg)
+
+	err := tmParser.ParseHCLFile("./testdata/threat-dedup-base.hcl", false)
+
+	if err != nil {
+		t.Fatalf("Error parsing base file: %s", err)
+	}
+
+	if len(tmParser.GetWrapped().Threatmodels) != 1 {
+		t.Fatalf("Expected 1 threatmodel, got %d", len(tmParser.GetWrapped().Threatmodels))
+	}
+
+	tm := tmParser.GetWrapped().Threatmodels[0]
+
+	if len(tm.Threats) != 2 {
+		t.Errorf("Expected 2 threats in base file, got %d", len(tm.Threats))
+	}
+
+	for _, threat := range tm.Threats {
+		t.Logf("Base file threat: Name='%s', Description='%s'", threat.Name, threat.Description)
+	}
+}
+
+func TestThreatDeduplicationByName(t *testing.T) {
+	defaultCfg := &ThreatmodelSpecConfig{}
+	defaultCfg.setDefaults()
+	tmParser := NewThreatmodelParser(defaultCfg)
+
+	err := tmParser.ParseFile("./testdata/threat-dedup-including.hcl", false)
+
+	if err != nil {
+		t.Fatalf("Error parsing threat dedup test file: %s", err)
+	}
+
+	// Should have one threatmodel
+	if len(tmParser.GetWrapped().Threatmodels) != 1 {
+		t.Errorf("Expected 1 threatmodel, got %d", len(tmParser.GetWrapped().Threatmodels))
+	}
+
+	tm := tmParser.GetWrapped().Threatmodels[0]
+
+	// Should have 3 threats total:
+	// - threat_one (from including file - takes precedence over base file's threat_one)
+	// - threat_two (from base file - added because it doesn't exist in including file)
+	// - threat_three (from including file)
+	if len(tm.Threats) != 3 {
+		t.Errorf("Expected 3 threats, got %d", len(tm.Threats))
+	}
+
+	// Verify threat_one has the description from the INCLUDING file (not base file)
+	// because the including file's threats take precedence
+	foundThreatOne := false
+	for _, threat := range tm.Threats {
+		if threat.Name == "threat_one" {
+			foundThreatOne = true
+			if threat.Description != "This is a DIFFERENT description for threat one" {
+				t.Errorf("Expected threat_one to have including file's description, got '%s'", threat.Description)
+			}
+			// Should have the impacts from including file
+			if len(threat.ImpactType) != 1 || threat.ImpactType[0] != "Availability" {
+				t.Errorf("Expected threat_one to have including file's impacts [Availability], got %v", threat.ImpactType)
+			}
+		}
+	}
+
+	if !foundThreatOne {
+		t.Errorf("Did not find threat_one in the parsed threats")
+	}
+
+	// Verify threat_two exists (from base)
+	foundThreatTwo := false
+	for _, threat := range tm.Threats {
+		if threat.Name == "threat_two" {
+			foundThreatTwo = true
+		}
+	}
+
+	if !foundThreatTwo {
+		t.Errorf("Did not find threat_two from base file")
+	}
+
+	// Verify threat_three exists (from including file)
+	foundThreatThree := false
+	for _, threat := range tm.Threats {
+		if threat.Name == "threat_three" {
+			foundThreatThree = true
+		}
+	}
+
+	if !foundThreatThree {
+		t.Errorf("Did not find threat_three from including file")
+	}
+}
