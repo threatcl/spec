@@ -8,9 +8,6 @@ import (
 	"github.com/hashicorp/hcl/v2/hclparse"
 )
 
-const (
-	VERSION = "0.2.1"
-)
 
 type ThreatmodelSpecConfig struct {
 	Version                        string
@@ -88,8 +85,7 @@ func (t *ThreatmodelSpecConfig) LoadSpecConfigFile(file string) error {
 }
 
 func (t *ThreatmodelSpecConfig) setDefaults() {
-	// t.Version = version.GetVersion()
-	t.Version = VERSION
+	t.Version = Version
 	t.InitiativeSizes = append(t.InitiativeSizes, "Undefined")
 	t.InitiativeSizes = append(t.InitiativeSizes, "Small")
 	t.InitiativeSizes = append(t.InitiativeSizes, "Medium")

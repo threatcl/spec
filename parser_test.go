@@ -8,13 +8,13 @@ import (
 	"github.com/zenizh/go-capturer"
 )
 
-const (
-	tmTestValid = `spec_version = "0.2.1"
+var (
+	tmTestValid = `spec_version = "` + Version + `"
 		threatmodel "test" {
 			author = "@xntrik"
 		}
 	`
-	tmTestValidJson = `{"spec_version": "0.2.1",
+	tmTestValidJson = `{"spec_version": "` + Version + `",
     "threatmodel": {
 		  "test": {
 			  "author": "@xntrik"
@@ -425,19 +425,19 @@ func TestParseHCLRaw(t *testing.T) {
 		},
 		{
 			"invalid_block",
-			"spec_version \"0.2.1\"",
+			"spec_version \"` + Version + `\"",
 			"Invalid block definition",
 			true,
 		},
 		{
 			"invalid_number_literal",
-			"spec_version = 0.2.1\"",
+			"spec_version = 0.1.0\"",
 			"Invalid number literal",
 			true,
 		},
 		{
 			"invalid_spec_version",
-			"spec_veon = \"0.2.1\"",
+			"spec_veon = \"` + Version + `\"",
 			"Unsupported argument; An argument named \"spec_veon\"",
 			true,
 		},
@@ -891,7 +891,7 @@ func TestParseJsonRaw(t *testing.T) {
 		},
 		{
 			"invalid_block",
-			"{spec_version: \"0.2.1\"}",
+			"{spec_version: \"` + Version + `\"}",
 			"Invalid JSON keyword",
 			true,
 		},
