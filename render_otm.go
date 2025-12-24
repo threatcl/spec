@@ -8,13 +8,9 @@ import (
 	"github.com/threatcl/go-otm/pkg/otm"
 )
 
-const (
-	OtmVer = "0.2.0"
-)
-
 func (tm *Threatmodel) RenderOtm() (otm.OtmSchemaJson, error) {
 	o := otm.OtmSchemaJson{}
-	o.OtmVersion = OtmVer
+	o.OtmVersion = OtmVersion
 
 	o.Project.Name = tm.Name
 	o.Project.Id = toKebabCase(tm.Name)

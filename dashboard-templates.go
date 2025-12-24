@@ -70,7 +70,7 @@ Diagram: {{ . }}
 
 ## Threat Scenarios
 {{ range . }}
-### Threat
+### {{ .Name }}
 
 {{ .Description }}
 
@@ -169,7 +169,7 @@ Created: {{ (unixToTime .CreatedAt) }} - Updated: {{ (unixToTime .UpdatedAt) }}
 
 `
 
-	TmDashboardTemplate = `# HCLTM Dashboard
+	TmDashboardTemplate = `# Threatcl Dashboard
 
 A dashboard of threat models.
 

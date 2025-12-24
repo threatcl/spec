@@ -37,7 +37,7 @@ All Go code should be formatted according to https://pkg.go.dev/golang.org/x/too
 This module is a key dependency of https://github.com/threatcl/threatcl, while this repo doesn't have any automated pipelines, it is expected to follow go module git tagging.
 
 To release a new version:
-* Update all the references to the version number to the new version, particularly the VERSION const in [config](config.go) file.
+* See [VERSION_MANAGEMENT](VERSION_MANAGEMENT.md) for how to bump the version
 * Update the [CHANGELOG](CHANGELOG.md)
 * Once the main branch has been merged and updated and all the [actions](https://github.com/threatcl/threatcl/actions) are complete - this is basically setup to release "dev" release (without docker)
 * Once that's complete and you're ready to do the primary release, you tag

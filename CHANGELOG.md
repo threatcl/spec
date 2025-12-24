@@ -1,3 +1,12 @@
+## 0.2.2
+
+### Dec 24, 2025
+
+CHANGES:
+
+* Minor tweak to MD output to use Threat name
+* Introduced version bumping script
+
 ## 0.2.1
 
 ### Dec 24, 2025
