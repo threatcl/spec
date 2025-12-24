@@ -1,3 +1,11 @@
+## 0.2.1
+
+### Dec 24, 2025
+
+CHANGES:
+
+* Fixing a panic error
+
 ## 0.2.0
 
 ### Dec 23, 2025
