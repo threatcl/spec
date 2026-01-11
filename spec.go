@@ -29,6 +29,7 @@ type Threat struct {
 	Controls             []*Control         `json:"expandedControl,omitempty" hcl:"control,block"`
 	ExpandedControls     []*Control         `json:"-" hcl:"expanded_control,block"`
 	ControlImports       []string           `json:"-" hcl:"control_imports,optional"`
+	Ref                  string             `json:"ref,omitempty" hcl:"ref,optional"`
 }
 
 type ProposedControl struct {
@@ -41,6 +42,7 @@ type Control struct {
 	Implemented         bool                `json:"implemented,omitempty" hcl:"implemented,optional" cty:"implemented"`
 	Description         string              `json:"description" hcl:"description" cty:"description"`
 	ImplementationNotes string              `json:"implementationNotes,omitempty" hcl:"implementation_notes,optional" cty:"implementation_notes"`
+	Ref                 string              `json:"ref,omitempty" hcl:"ref,optional" cty:"ref"`
 	RiskReduction       int                 `json:"riskReduction,omitempty" hcl:"risk_reduction,optional" cty:"risk_reduction"`
 	Attributes          []*ControlAttribute `json:"attribute,omitempty" hcl:"attribute,block" cty:"attribute"`
 }
@@ -164,9 +166,17 @@ type Variable struct {
 	VariableValue string `json:"variableValue" hcl:"value,attr"`
 }
 
+type Backend struct {
+	BackendName    string `json:"backendName" hcl:"backend_name,label"`
+	BackendOrg     string `json:"organization" hcl:"organization,attr"`
+	BackendTMShort string `json:"threatmodel,omitempty" hcl:"threatmodel,optional"`
+	BackendProject string `json:"project,omitempty" hcl:"project,optional"`
+}
+
 type ThreatmodelWrapped struct {
 	Threatmodels []Threatmodel `json:"threatmodels" hcl:"threatmodel,block"`
 	SpecVersion  string        `json:"specVersion,omitempty" hcl:"spec_version,optional"`
 	Components   []*Component  `json:"components,omitempty" hcl:"component,block"`
 	Variables    []*Variable   `json:"variables,omitempty" hcl:"variable,block"`
+	Backends     []*Backend    `json:"backend,omitempty" hcl:"backend,block"`
 }

@@ -1019,3 +1019,231 @@ func TestThreatDeduplicationByName(t *testing.T) {
 		t.Errorf("Did not find threat_three from including file")
 	}
 }
+
+func TestValidateBackend(t *testing.T) {
+	cases := []struct {
+		name        string
+		in          string
+		exp         string
+		errorthrown bool
+	}{
+		{
+			"valid_backend",
+			`spec_version = "` + Version + `"
+			backend "test_backend" {
+				organization = "test_org"
+			}
+			threatmodel "test" {
+				author = "@xntrik"
+			}`,
+			"",
+			false,
+		},
+		{
+			"valid_backend_with_project",
+			`spec_version = "` + Version + `"
+			backend "test_backend" {
+				organization = "test_org"
+				project = "test_project"
+			}
+			threatmodel "test" {
+				author = "@xntrik"
+			}`,
+			"",
+			false,
+		},
+		{
+			"no_backend",
+			`spec_version = "` + Version + `"
+			threatmodel "test" {
+				author = "@xntrik"
+			}`,
+			"",
+			false,
+		},
+		{
+			"backend_missing_organization",
+			`spec_version = "` + Version + `"
+			backend "test_backend" {
+				project = "test_project"
+			}
+			threatmodel "test" {
+				author = "@xntrik"
+			}`,
+			"Missing required argument",
+			true,
+		},
+		{
+			"multiple_backends",
+			`spec_version = "` + Version + `"
+			backend "backend_one" {
+				organization = "org_one"
+			}
+			backend "backend_two" {
+				organization = "org_two"
+			}
+			threatmodel "test" {
+				author = "@xntrik"
+			}`,
+			"only one backend block is allowed, found 2",
+			true,
+		},
+		{
+			"multiple_backends_one_missing_org",
+			`spec_version = "` + Version + `"
+			backend "backend_one" {
+				organization = "org_one"
+			}
+			backend "backend_two" {
+				project = "test_project"
+			}
+			threatmodel "test" {
+				author = "@xntrik"
+			}`,
+			"Missing required argument",
+			true,
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			defaultCfg := &ThreatmodelSpecConfig{}
+			defaultCfg.setDefaults()
+			tmParser := NewThreatmodelParser(defaultCfg)
+
+			err := tmParser.ParseHCLRaw([]byte(tc.in))
+
+			if err != nil {
+				t.Logf("Err: '%s'. Expected: '%s'.", err.Error(), tc.exp)
+				if !strings.Contains(err.Error(), tc.exp) {
+					t.Errorf("%s: Error parsing hcl tm: %s", tc.name, err)
+				}
+			} else {
+				t.Logf("Expected: '%s'.", tc.exp)
+				if tc.errorthrown {
+					t.Errorf("%s: An error was expected but none was thrown", tc.name)
+				}
+			}
+		})
+	}
+}
+
+func TestValidateBackendDirect(t *testing.T) {
+	// Test the validateBackend function directly
+	defaultCfg := &ThreatmodelSpecConfig{}
+	defaultCfg.setDefaults()
+
+	t.Run("no_backend", func(t *testing.T) {
+		tmParser := NewThreatmodelParser(defaultCfg)
+		tmParser.wrapped = &ThreatmodelWrapped{
+			Backends: []*Backend{},
+		}
+		err := tmParser.validateBackend()
+		if err != nil {
+			t.Errorf("Expected no error with no backend, got: %s", err)
+		}
+	})
+
+	t.Run("single_valid_backend", func(t *testing.T) {
+		tmParser := NewThreatmodelParser(defaultCfg)
+		tmParser.wrapped = &ThreatmodelWrapped{
+			Backends: []*Backend{
+				{
+					BackendName: "test_backend",
+					BackendOrg:  "test_org",
+				},
+			},
+		}
+		err := tmParser.validateBackend()
+		if err != nil {
+			t.Errorf("Expected no error with valid backend, got: %s", err)
+		}
+	})
+
+	t.Run("single_backend_with_project", func(t *testing.T) {
+		tmParser := NewThreatmodelParser(defaultCfg)
+		tmParser.wrapped = &ThreatmodelWrapped{
+			Backends: []*Backend{
+				{
+					BackendName:    "test_backend",
+					BackendOrg:     "test_org",
+					BackendProject: "test_project",
+				},
+			},
+		}
+		err := tmParser.validateBackend()
+		if err != nil {
+			t.Errorf("Expected no error with valid backend with project, got: %s", err)
+		}
+	})
+
+	t.Run("backend_missing_org", func(t *testing.T) {
+		tmParser := NewThreatmodelParser(defaultCfg)
+		tmParser.wrapped = &ThreatmodelWrapped{
+			Backends: []*Backend{
+				{
+					BackendName:    "test_backend",
+					BackendProject: "test_project",
+				},
+			},
+		}
+		err := tmParser.validateBackend()
+		if err == nil {
+			t.Errorf("Expected error with missing organization")
+		} else if !strings.Contains(err.Error(), "organization is required") {
+			t.Errorf("Expected 'organization is required' error, got: %s", err)
+		}
+	})
+
+	t.Run("multiple_backends", func(t *testing.T) {
+		tmParser := NewThreatmodelParser(defaultCfg)
+		tmParser.wrapped = &ThreatmodelWrapped{
+			Backends: []*Backend{
+				{
+					BackendName: "backend_one",
+					BackendOrg:  "org_one",
+				},
+				{
+					BackendName: "backend_two",
+					BackendOrg:  "org_two",
+				},
+			},
+		}
+		err := tmParser.validateBackend()
+		if err == nil {
+			t.Errorf("Expected error with multiple backends")
+		} else if !strings.Contains(err.Error(), "only one backend block is allowed") {
+			t.Errorf("Expected 'only one backend block is allowed' error, got: %s", err)
+		}
+	})
+
+	t.Run("three_backends", func(t *testing.T) {
+		tmParser := NewThreatmodelParser(defaultCfg)
+		tmParser.wrapped = &ThreatmodelWrapped{
+			Backends: []*Backend{
+				{
+					BackendName: "backend_one",
+					BackendOrg:  "org_one",
+				},
+				{
+					BackendName: "backend_two",
+					BackendOrg:  "org_two",
+				},
+				{
+					BackendName: "backend_three",
+					BackendOrg:  "org_three",
+				},
+			},
+		}
+		err := tmParser.validateBackend()
+		if err == nil {
+			t.Errorf("Expected error with three backends")
+		} else if !strings.Contains(err.Error(), "only one backend block is allowed, found 3") {
+			t.Errorf("Expected error mentioning 3 backends, got: %s", err)
+		}
+	})
+}
