@@ -1,3 +1,11 @@
+## 0.2.4
+
+### Jan 11, 2026
+
+CHANGES:
+
+* Now with backend block and ref attributes
+
 ## 0.2.3
 
 ### Dec 24, 2025

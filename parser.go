@@ -132,6 +132,35 @@ func (p *ThreatmodelParser) validateTms() error {
 	return nil
 }
 
+func (p *ThreatmodelParser) validateBackend() error {
+	var errMap error
+
+	// Check that there is at most one backend block
+	if len(p.wrapped.Backends) > 1 {
+		errMap = multierror.Append(errMap, fmt.Errorf(
+			"only one backend block is allowed, found %d",
+			len(p.wrapped.Backends),
+		))
+	}
+
+	// If there is a backend block, validate it has an organization
+	if len(p.wrapped.Backends) > 0 {
+		backend := p.wrapped.Backends[0]
+		if backend.BackendOrg == "" {
+			errMap = multierror.Append(errMap, fmt.Errorf(
+				"backend '%s': organization is required",
+				backend.BackendName,
+			))
+		}
+	}
+
+	if errMap != nil {
+		return errMap
+	}
+
+	return nil
+}
+
 func (p *ThreatmodelParser) validateSpec(filename string) {
 	// @TODO: This has been edited to not print to STDOUT - it should be wrapped in a DEBUG flag
 
@@ -399,6 +428,11 @@ func (p *ThreatmodelParser) parseHCL(f *hcl.File, filename string, isChild bool)
 
 	// Process control imports after parsing
 	err := p.processControlImports(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = p.validateBackend()
 	if err != nil {
 		return err
 	}
