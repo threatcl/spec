@@ -631,7 +631,47 @@ func TestParseHCLRaw(t *testing.T) {
 					}
 				}
 			}`,
-			"duplicate flow found in dfd '1:2'",
+			"duplicate flow found in dfd '1:2' with name 'http'",
+			true,
+		},
+		{
+			"dfd_v2_parallel_flows_distinct_names",
+			`threatmodel "dfdtest" {
+			  author = "j"
+				data_flow_diagram_v2 "main" {
+				  process "1" {}
+					process "2" {}
+					flow "http" {
+					  from = "1"
+						to = "2"
+					}
+					flow "websocket" {
+					  from = "1"
+						to = "2"
+					}
+				}
+			}`,
+			"",
+			false,
+		},
+		{
+			"dfd_v2_parallel_flows_dupe_name",
+			`threatmodel "dfdtest" {
+			  author = "j"
+				data_flow_diagram_v2 "main" {
+				  process "1" {}
+					process "2" {}
+					flow "http" {
+					  from = "1"
+						to = "2"
+					}
+					flow "http" {
+					  from = "1"
+						to = "2"
+					}
+				}
+			}`,
+			"duplicate flow found in dfd '1:2' with name 'http'",
 			true,
 		},
 		{

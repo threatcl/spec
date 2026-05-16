@@ -1,4 +1,4 @@
-spec_version = "0.2.4"
+spec_version = "0.2.5"
 
 threatmodel "Tower of London" {
 

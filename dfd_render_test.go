@@ -1,5 +1,3 @@
-//go:build cgo
-
 package spec
 
 import (
@@ -55,7 +53,7 @@ func TestDfdPngGenerate(t *testing.T) {
 			defer os.RemoveAll(d)
 
 			for _, adfd := range tc.tm.DataFlowDiagrams {
-				err = adfd.GenerateDfdPng(fmt.Sprintf("%s/out.png", d), tc.tm.Name)
+				err = adfd.GenerateDfdPng(fmt.Sprintf("%s/out.png", d), tc.tm.Name, DfdRenderOptions{})
 			}
 
 			if err != nil {
@@ -131,7 +129,7 @@ func TestDfdSvgGenerate(t *testing.T) {
 			defer os.RemoveAll(d)
 
 			for _, adfd := range tc.tm.DataFlowDiagrams {
-				err = adfd.GenerateDfdSvg(fmt.Sprintf("%s/out.svg", d), tc.tm.Name)
+				err = adfd.GenerateDfdSvg(fmt.Sprintf("%s/out.svg", d), tc.tm.Name, DfdRenderOptions{})
 			}
 
 			if err != nil {
@@ -202,7 +200,7 @@ func TestDfdPngGenerateBytes(t *testing.T) {
 			// t.Parallel()
 
 			for _, adfd := range tc.tm.DataFlowDiagrams {
-				pngBytes, err := adfd.GenerateDfdPngBytes(tc.tm.Name)
+				pngBytes, err := adfd.GenerateDfdPngBytes(tc.tm.Name, DfdRenderOptions{})
 
 				if err != nil {
 					if !strings.Contains(err.Error(), tc.exp) {
@@ -257,13 +255,7 @@ func TestDfdSvgGenerateBytes(t *testing.T) {
 			// t.Parallel()
 
 			for _, adfd := range tc.tm.DataFlowDiagrams {
-				tmpFile, err := ioutil.TempFile("", "dfd")
-				if err != nil {
-					t.Fatalf("Error creating tmp file: %s", err)
-				}
-				defer os.RemoveAll(tmpFile.Name())
-
-				dot, err := adfd.generateDfdDotFile(tmpFile.Name(), tc.tm.Name)
+				dot, err := adfd.generateDfdDot(tc.tm.Name, DfdRenderOptions{})
 				if err != nil {
 					t.Fatalf("Error generating dot: %s", err)
 				}

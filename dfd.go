@@ -2,301 +2,230 @@ package spec
 
 import (
 	"fmt"
-	"os"
+	"regexp"
+	"strings"
 
-	dfd "github.com/xntrik/go-dfd/dfd"
-	"gonum.org/v1/gonum/graph"
-	"gonum.org/v1/gonum/graph/encoding"
+	"github.com/emicklei/dot"
 )
 
-func (d *DataFlowDiagram) GenerateDot(tmName string) (string, error) {
-	tmpFile, err := os.CreateTemp("", "dot")
+// DFD shape conventions, matching the legacy xntrik/go-dfd defaults so existing
+// diagrams keep their look-and-feel.
+const (
+	processShape  = "circle"
+	externalShape = "diamond"
+	dataStoreCap  = "cylinder"
+
+	processFill  = "#9ed3ff"
+	externalFill = "#ffd59e"
+	dataStoreFill = "#fffb9e"
+
+	trustBoundaryColor = "red"
+)
+
+var safeIDPattern = regexp.MustCompile(`[^a-zA-Z0-9_]+`)
+
+func safeID(prefix, name string) string {
+	clean := safeIDPattern.ReplaceAllString(name, "_")
+	return fmt.Sprintf("%s_%s", prefix, clean)
+}
+
+// GenerateDot returns the DFD rendered as Graphviz DOT source.
+func (d *DataFlowDiagram) GenerateDot(tmName string, opts DfdRenderOptions) (string, error) {
+	g, err := d.buildDotGraph(tmName, opts)
 	if err != nil {
 		return "", err
 	}
-	defer os.RemoveAll(tmpFile.Name())
-
-	dot, err := d.generateDfdDotFile(tmpFile.Name(), tmName)
-	if err != nil {
-		return "", err
-	}
-	return dot, nil
+	return g.String(), nil
 }
 
-func (d *DataFlowDiagram) GenerateDfdPng(filepath, tmName string) error {
-	tmpFile, err := os.CreateTemp("", "dfd")
+// GenerateDfdPng writes the DFD as a PNG to filepath.
+func (d *DataFlowDiagram) GenerateDfdPng(filepath, tmName string, opts DfdRenderOptions) error {
+	dotSrc, err := d.GenerateDot(tmName, opts)
 	if err != nil {
 		return err
 	}
-	defer os.RemoveAll(tmpFile.Name())
+	return dotToPng([]byte(dotSrc), filepath)
+}
 
-	dot, err := d.generateDfdDotFile(tmpFile.Name(), tmName)
+// GenerateDfdSvg writes the DFD as an SVG to filepath.
+func (d *DataFlowDiagram) GenerateDfdSvg(filepath, tmName string, opts DfdRenderOptions) error {
+	dotSrc, err := d.GenerateDot(tmName, opts)
 	if err != nil {
 		return err
 	}
-
-	dotBytes := []byte(dot)
-	return dotToPng(dotBytes, filepath)
+	return dotToSvg([]byte(dotSrc), filepath)
 }
 
-func (d *DataFlowDiagram) GenerateDfdSvg(filepath, tmName string) error {
-	tmpFile, err := os.CreateTemp("", "dfd")
-	if err != nil {
-		return err
-	}
-	defer os.RemoveAll(tmpFile.Name())
-
-	dot, err := d.generateDfdDotFile(tmpFile.Name(), tmName)
-	if err != nil {
-		return err
-	}
-
-	dotBytes := []byte(dot)
-
-	err = dotToSvg(dotBytes, filepath)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func newDfdProcess(name string) (*dfd.Process, error) {
-
-	newProcess := dfd.NewProcess(name)
-
-	// @BUG: The styling below doesn't work for go-graphviz generated images
-	//       but the styling will work if we output DOT and render in browser
-	//       Therefore we should handle this separately depending on context
-	//       I.e. if we're rendering DOT out, let's make it pretty. If not, keep
-	//       it real simple. *sigh*
-
-	// In this example, we can't set a "dashed" outline with a separate color
-	// boo
-
-	err := newProcess.SetAttribute(encoding.Attribute{
-		Key:   "style",
-		Value: "filled",
-	})
-
-	return newProcess, err
-}
-
-func newDfdExternalEntity(name string) (*dfd.ExternalService, error) {
-	newEntity := dfd.NewExternalService(name)
-
-	// @BUG: The styling below doesn't work for go-graphviz generated images
-	//       but the styling will work if we output DOT and render in browser
-	//       Therefore we should handle this separately depending on context
-	//       I.e. if we're rendering DOT out, let's make it pretty. If not, keep
-	//       it real simple. *sigh*
-
-	// In this example, we set it to filled, which works in raw DOT, but not
-	// in the auto generated PNG. I believe this is an issue in
-	// github.com/goccy/go-graphviz
-
-	err := newEntity.SetAttribute(encoding.Attribute{
-		Key:   "style",
-		Value: "filled",
-	})
-	return newEntity, err
-}
-
-func newDfdStore(name string) (*dfd.DataStore, error) {
-	newStore := dfd.NewDataStore(name)
-	err := newStore.SetAttribute(encoding.Attribute{
-		Key:   "style",
-		Value: "filled",
-	})
+// GenerateDfdPngBytes returns the DFD as PNG bytes.
+func (d *DataFlowDiagram) GenerateDfdPngBytes(tmName string, opts DfdRenderOptions) ([]byte, error) {
+	dotSrc, err := d.GenerateDot(tmName, opts)
 	if err != nil {
 		return nil, err
 	}
-
-	return newStore, err
+	return dotToPngBytes([]byte(dotSrc))
 }
 
-func (d *DataFlowDiagram) generateDfdDotFile(filepath, tmName string) (string, error) {
-	// Build the DFD
-	g := dfd.InitializeDFD(fmt.Sprintf("%s_%s", tmName, d.Name))
+// GenerateDfdSvgBytes returns the DFD as SVG bytes.
+func (d *DataFlowDiagram) GenerateDfdSvgBytes(tmName string, opts DfdRenderOptions) ([]byte, error) {
+	dotSrc, err := d.GenerateDot(tmName, opts)
+	if err != nil {
+		return nil, err
+	}
+	return dotToSvgBytes([]byte(dotSrc))
+}
 
-	zones := make(map[string]*dfd.TrustBoundary)
-	processes := make(map[string]*dfd.Process)
-	external_elements := make(map[string]*dfd.ExternalService)
-	data_stores := make(map[string]*dfd.DataStore)
+// generateDfdDot is the historical internal name used by tests; it stays as a
+// thin wrapper around GenerateDot.
+func (d *DataFlowDiagram) generateDfdDot(tmName string, opts DfdRenderOptions) (string, error) {
+	return d.GenerateDot(tmName, opts)
+}
 
-	// Add zones
+func (d *DataFlowDiagram) buildDotGraph(tmName string, opts DfdRenderOptions) (*dot.Graph, error) {
+	g := dot.NewGraph(dot.Directed)
+	g.Attr("label", fmt.Sprintf("%s_%s", tmName, d.Name))
+	g.Attr("labelloc", "t")
+	g.Attr("rankdir", "LR")
+
+	nodes := map[string]dot.Node{}
+	zones := map[string]*dot.Graph{}
+
+	getOrCreateZone := func(name string) *dot.Graph {
+		if z, ok := zones[name]; ok {
+			return z
+		}
+		sub := g.Subgraph(safeID("cluster", name), dot.ClusterOption{})
+		sub.Attr("label", name)
+		sub.Attr("style", "dashed")
+		sub.Attr("color", trustBoundaryColor)
+		sub.Attr("fontcolor", trustBoundaryColor)
+		zones[name] = sub
+		return sub
+	}
+
+	addProcess := func(parent *dot.Graph, name string) {
+		if _, exists := nodes[name]; exists {
+			return
+		}
+		n := parent.Node(name).
+			Attr("shape", processShape).
+			Attr("style", "filled").
+			Attr("fillcolor", processFill)
+		nodes[name] = n
+	}
+
+	addExternal := func(parent *dot.Graph, name string) {
+		if _, exists := nodes[name]; exists {
+			return
+		}
+		n := parent.Node(name).
+			Attr("shape", externalShape).
+			Attr("style", "filled").
+			Attr("fillcolor", externalFill)
+		nodes[name] = n
+	}
+
+	addDataStore := func(parent *dot.Graph, name string) {
+		if _, exists := nodes[name]; exists {
+			return
+		}
+		n := parent.Node(name).
+			Attr("shape", dataStoreCap).
+			Attr("style", "filled").
+			Attr("fillcolor", dataStoreFill)
+		nodes[name] = n
+	}
+
 	for _, zone := range d.TrustZones {
-		if _, existing := zones[zone.Name]; !existing {
-			newZone, err := g.AddTrustBoundary(zone.Name, "red")
-			zones[zone.Name] = newZone
-			if err != nil {
-				return "", err
-			}
+		z := getOrCreateZone(zone.Name)
+		for _, p := range zone.Processes {
+			addProcess(z, p.Name)
 		}
-
-		// Add Processes from inside zone
-		for _, process := range zone.Processes {
-			newProcess, err := newDfdProcess(process.Name)
-			if err != nil {
-				return "", err
-			}
-			processes[process.Name] = newProcess
-			zones[zone.Name].AddNodeElem(processes[process.Name])
+		for _, e := range zone.ExternalElements {
+			addExternal(z, e.Name)
 		}
-
-		// Add External Elements from inside zone
-		for _, external_element := range zone.ExternalElements {
-			newElement, err := newDfdExternalEntity(external_element.Name)
-			if err != nil {
-				return "", err
-			}
-			external_elements[external_element.Name] = newElement
-			zones[zone.Name].AddNodeElem(external_elements[external_element.Name])
-		}
-
-		// Add Data Stores from inside zone
-		for _, data_store := range zone.DataStores {
-			newStore, err := newDfdStore(data_store.Name)
-			if err != nil {
-				return "", err
-			}
-			data_stores[data_store.Name] = newStore
-			zones[zone.Name].AddNodeElem(data_stores[data_store.Name])
-		}
-
-	}
-
-	// Add Processes
-	for _, process := range d.Processes {
-		newProcess, err := newDfdProcess(process.Name)
-		if err != nil {
-			return "", err
-		}
-		processes[process.Name] = newProcess
-
-		if process.TrustZone != "" {
-			if _, ok := zones[process.TrustZone]; !ok {
-				zone, err := g.AddTrustBoundary(process.TrustZone, "red")
-				zones[process.TrustZone] = zone
-				if err != nil {
-					return "", err
-				}
-			}
-
-			zones[process.TrustZone].AddNodeElem(processes[process.Name])
-		} else {
-			g.AddNodeElem(processes[process.Name])
+		for _, s := range zone.DataStores {
+			addDataStore(z, s.Name)
 		}
 	}
 
-	// Add External Elements
-	for _, external_element := range d.ExternalElements {
-		newElement, err := newDfdExternalEntity(external_element.Name)
-		if err != nil {
-			return "", err
+	for _, p := range d.Processes {
+		parent := g
+		if p.TrustZone != "" {
+			parent = getOrCreateZone(p.TrustZone)
 		}
-		external_elements[external_element.Name] = newElement
-
-		if external_element.TrustZone != "" {
-			if _, ok := zones[external_element.TrustZone]; !ok {
-				zone, err := g.AddTrustBoundary(external_element.TrustZone, "red")
-				zones[external_element.TrustZone] = zone
-				if err != nil {
-					return "", err
-				}
-			}
-
-			zones[external_element.TrustZone].AddNodeElem(external_elements[external_element.Name])
-		} else {
-			g.AddNodeElem(external_elements[external_element.Name])
-		}
+		addProcess(parent, p.Name)
 	}
 
-	// Add Data Stores
-	for _, data_store := range d.DataStores {
-		newStore, err := newDfdStore(data_store.Name)
-		if err != nil {
-			return "", err
+	for _, e := range d.ExternalElements {
+		parent := g
+		if e.TrustZone != "" {
+			parent = getOrCreateZone(e.TrustZone)
 		}
-		data_stores[data_store.Name] = newStore
-
-		if data_store.TrustZone != "" {
-			if _, ok := zones[data_store.TrustZone]; !ok {
-				zone, err := g.AddTrustBoundary(data_store.TrustZone, "red")
-				zones[data_store.TrustZone] = zone
-				if err != nil {
-					return "", err
-				}
-			}
-
-			zones[data_store.TrustZone].AddNodeElem(data_stores[data_store.Name])
-		} else {
-			g.AddNodeElem(data_stores[data_store.Name])
-		}
+		addExternal(parent, e.Name)
 	}
+
+	for _, s := range d.DataStores {
+		parent := g
+		if s.TrustZone != "" {
+			parent = getOrCreateZone(s.TrustZone)
+		}
+		addDataStore(parent, s.Name)
+	}
+
+	colors, legendOrder := assignProtocolColors(d.Flows)
 
 	for _, flow := range d.Flows {
-
-		var to, from graph.Node
-
-		for name, process := range processes {
-			if name == flow.From {
-				from = process
-			}
-
-			if name == flow.To {
-				to = process
+		from, fromOK := nodes[flow.From]
+		to, toOK := nodes[flow.To]
+		if !fromOK {
+			return nil, fmt.Errorf("flow %q references unknown source node %q", flow.Name, flow.From)
+		}
+		if !toOK {
+			return nil, fmt.Errorf("flow %q references unknown destination node %q", flow.Name, flow.To)
+		}
+		edge := g.Edge(from, to)
+		if label := flowLabel(flow, opts.ProtocolStyle); label != "" {
+			edge.Attr("label", label)
+		}
+		if opts.ProtocolStyle.shouldColor() {
+			if c, ok := colors[strings.TrimSpace(flow.Protocol)]; ok {
+				edge.Attr("color", c)
+				edge.Attr("fontcolor", c)
 			}
 		}
-
-		for name, external_element := range external_elements {
-			if name == flow.From {
-				from = external_element
-			}
-
-			if name == flow.To {
-				to = external_element
-			}
-		}
-
-		for name, data_store := range data_stores {
-			if name == flow.From {
-				from = data_store
-			}
-
-			if name == flow.To {
-				to = data_store
-			}
-		}
-
-		// g.AddFlow(processes[flow.From], processes[flow.To], flow.Name)
-		g.AddFlow(from, to, flow.Name)
 	}
 
-	// Construct temp file for the dot file output
-	// The library we use needs to save an actual file,
-	// even though we don't use it, and instead use the raw
-	// text output
-	client := dfd.NewClient(filepath)
-	dot, err := client.DFDToDOT(g)
-	if err != nil {
-		return "", err
+	if opts.ProtocolStyle.shouldColor() && len(legendOrder) > 0 {
+		addDotLegend(g, legendOrder, colors)
 	}
-	return dot, nil
+
+	return g, nil
 }
 
-func (d *DataFlowDiagram) GenerateDfdPngBytes(tmName string) ([]byte, error) {
-	tmpFile, err := os.CreateTemp("", "dfd")
-	if err != nil {
-		return nil, err
-	}
-	defer os.RemoveAll(tmpFile.Name())
+// addDotLegend builds a separate cluster_legend subgraph with one colored
+// sample edge per protocol. Source/sink nodes are invisible so only the labeled
+// edges show.
+func addDotLegend(g *dot.Graph, protocols []string, colors map[string]string) {
+	legend := g.Subgraph("cluster_legend", dot.ClusterOption{})
+	legend.Attr("label", "Protocols")
+	legend.Attr("style", "dashed")
+	legend.Attr("color", "gray")
+	legend.Attr("fontcolor", "gray")
 
-	dot, err := d.generateDfdDotFile(tmpFile.Name(), tmName)
-	if err != nil {
-		return nil, err
+	for i, p := range protocols {
+		src := legend.Node(fmt.Sprintf("legend_src_%d", i)).
+			Attr("shape", "point").
+			Attr("style", "invis").
+			Attr("width", "0").
+			Attr("height", "0")
+		dst := legend.Node(fmt.Sprintf("legend_dst_%d", i)).
+			Attr("shape", "point").
+			Attr("style", "invis").
+			Attr("width", "0").
+			Attr("height", "0")
+		legend.Edge(src, dst).
+			Attr("label", p).
+			Attr("color", colors[p]).
+			Attr("fontcolor", colors[p])
 	}
-
-	dotBytes := []byte(dot)
-	return dotToPngBytes(dotBytes)
 }

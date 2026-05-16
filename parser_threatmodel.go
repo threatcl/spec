@@ -498,18 +498,23 @@ func (tm *Threatmodel) ValidateTm(p *ThreatmodelParser) error {
 			}
 		}
 
-		// Validate data flows
+		// Validate data flows. Multiple flows between the same from→to pair
+		// are allowed (e.g. an HTTP request and a separate websocket on the
+		// same edge), but each must have a distinct name so authors don't
+		// silently double-up an edge through copy/paste.
 		flows := make(map[string]interface{})
 		if adfd.Flows != nil {
 			for _, rawflow := range adfd.Flows {
 				flow := fmt.Sprintf("%s:%s", rawflow.From, rawflow.To)
+				flowKey := fmt.Sprintf("%s:%s:%s", rawflow.From, rawflow.To, rawflow.Name)
 
-				// check for unique flows
-				if _, ok := flows[flow]; ok {
+				// check for unique flows (same from, to, AND name)
+				if _, ok := flows[flowKey]; ok {
 					errMap = multierror.Append(errMap, fmt.Errorf(
-						"TM '%s': duplicate flow found in dfd '%s'",
+						"TM '%s': duplicate flow found in dfd '%s' with name '%s'",
 						tm.Name,
 						flow,
+						rawflow.Name,
 					))
 				}
 
@@ -539,7 +544,7 @@ func (tm *Threatmodel) ValidateTm(p *ThreatmodelParser) error {
 					))
 				}
 
-				flows[flow] = nil
+				flows[flowKey] = nil
 
 			}
 		}
