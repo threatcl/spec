@@ -1,5 +1,3 @@
-//go:build cgo
-
 package spec
 
 import (
@@ -257,13 +255,7 @@ func TestDfdSvgGenerateBytes(t *testing.T) {
 			// t.Parallel()
 
 			for _, adfd := range tc.tm.DataFlowDiagrams {
-				tmpFile, err := ioutil.TempFile("", "dfd")
-				if err != nil {
-					t.Fatalf("Error creating tmp file: %s", err)
-				}
-				defer os.RemoveAll(tmpFile.Name())
-
-				dot, err := adfd.generateDfdDotFile(tmpFile.Name(), tc.tm.Name)
+				dot, err := adfd.generateDfdDot(tc.tm.Name)
 				if err != nil {
 					t.Fatalf("Error generating dot: %s", err)
 				}
