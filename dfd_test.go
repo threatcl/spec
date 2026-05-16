@@ -163,6 +163,48 @@ func fullDfdTm2() *Threatmodel {
 
 }
 
+// parallelFlowsDfdTm returns a threatmodel with multiple flow blocks sharing
+// the same from→to but distinct names. Used to verify that renderers emit
+// parallel edges, one per flow, with each label intact.
+func parallelFlowsDfdTm() *Threatmodel {
+	return &Threatmodel{
+		Name:   "test",
+		Author: "x",
+		DataFlowDiagrams: []*DataFlowDiagram{
+			{
+				Name: "parallel",
+				Processes: []*DfdProcess{
+					{Name: "client"},
+					{Name: "server"},
+				},
+				Flows: []*DfdFlow{
+					{Name: "http", From: "client", To: "server"},
+					{Name: "websocket", From: "client", To: "server"},
+				},
+			},
+		},
+	}
+}
+
+func TestDfdDotParallelFlows(t *testing.T) {
+	tm := parallelFlowsDfdTm()
+	dfd := tm.DataFlowDiagrams[0]
+
+	dotSrc, err := dfd.GenerateDot(tm.Name)
+	if err != nil {
+		t.Fatalf("Error generating dot: %s", err)
+	}
+
+	// DOT supports parallel edges natively — one edge line per flow, each
+	// carrying its own label.
+	if c := strings.Count(dotSrc, `label="http"`); c != 1 {
+		t.Errorf("expected 1 occurrence of label=\"http\", got %d in:\n%s", c, dotSrc)
+	}
+	if c := strings.Count(dotSrc, `label="websocket"`); c != 1 {
+		t.Errorf("expected 1 occurrence of label=\"websocket\", got %d in:\n%s", c, dotSrc)
+	}
+}
+
 func TestDfdDotGenerate(t *testing.T) {
 	cases := []struct {
 		name        string

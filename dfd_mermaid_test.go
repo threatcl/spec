@@ -41,6 +41,24 @@ func TestDfdMermaidGenerate(t *testing.T) {
 	}
 }
 
+func TestDfdMermaidParallelFlows(t *testing.T) {
+	tm := parallelFlowsDfdTm()
+	dfd := tm.DataFlowDiagrams[0]
+
+	out, err := dfd.GenerateMermaid(tm.Name)
+	if err != nil {
+		t.Fatalf("Error generating mermaid: %s", err)
+	}
+
+	// Mermaid renders parallel edges as separate `a -- "label" --> b` lines.
+	if c := strings.Count(out, `-- "http" -->`); c != 1 {
+		t.Errorf("expected 1 occurrence of `-- \"http\" -->`, got %d in:\n%s", c, out)
+	}
+	if c := strings.Count(out, `-- "websocket" -->`); c != 1 {
+		t.Errorf("expected 1 occurrence of `-- \"websocket\" -->`, got %d in:\n%s", c, out)
+	}
+}
+
 func TestDfdMermaidUnknownFlowEndpoint(t *testing.T) {
 	tm := &Threatmodel{
 		Name: "broken",
