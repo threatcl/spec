@@ -1,3 +1,15 @@
+## 0.2.5
+
+### May 16, 2026
+
+CHANGES:
+
+* DFD's can now have multiple `flow` blocks in the same direction
+* DFD Flow's now have an optional `protocol` attribute
+* DFD rendering supports various rendering options, currently targeting the protocol rendering. By default, `protocol` will be appended to a flow's label. But can also be color-coded, none, or both.
+* DFD rendering now supports outputting in mermaid and d2 text
+* DFD rendering to DOT and SVG/PNG no longer depends on CGO
+
 ## 0.2.4
 
 ### Jan 11, 2026
