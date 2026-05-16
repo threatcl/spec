@@ -163,6 +163,25 @@ func fullDfdTm2() *Threatmodel {
 
 }
 
+// protocolFlowsDfdTm returns a diagram with two flows sharing a protocol and
+// one with a different protocol. Exercises sorted color assignment and the
+// legend dedup logic.
+func protocolFlowsDfdTm() *DataFlowDiagram {
+	return &DataFlowDiagram{
+		Name: "proto",
+		Processes: []*DfdProcess{
+			{Name: "client"},
+			{Name: "server"},
+			{Name: "worker"},
+		},
+		Flows: []*DfdFlow{
+			{Name: "login", From: "client", To: "server", Protocol: "https"},
+			{Name: "events", From: "server", To: "worker", Protocol: "amqp"},
+			{Name: "static", From: "client", To: "server", Protocol: "https"},
+		},
+	}
+}
+
 // parallelFlowsDfdTm returns a threatmodel with multiple flow blocks sharing
 // the same from→to but distinct names. Used to verify that renderers emit
 // parallel edges, one per flow, with each label intact.
@@ -190,7 +209,7 @@ func TestDfdDotParallelFlows(t *testing.T) {
 	tm := parallelFlowsDfdTm()
 	dfd := tm.DataFlowDiagrams[0]
 
-	dotSrc, err := dfd.GenerateDot(tm.Name)
+	dotSrc, err := dfd.GenerateDot(tm.Name, DfdRenderOptions{})
 	if err != nil {
 		t.Fatalf("Error generating dot: %s", err)
 	}
@@ -202,6 +221,87 @@ func TestDfdDotParallelFlows(t *testing.T) {
 	}
 	if c := strings.Count(dotSrc, `label="websocket"`); c != 1 {
 		t.Errorf("expected 1 occurrence of label=\"websocket\", got %d in:\n%s", c, dotSrc)
+	}
+}
+
+func TestDfdDotProtocolStyles(t *testing.T) {
+	dfd := protocolFlowsDfdTm()
+
+	// Palette assignment is alphabetical on distinct protocols: amqp -> first
+	// color (#E69F00), https -> second (#56B4E9).
+	const amqpColor = "#E69F00"
+	const httpsColor = "#56B4E9"
+
+	cases := []struct {
+		name     string
+		style    ProtocolStyle
+		expect   []string
+		notExpect []string
+	}{
+		{
+			name:  "label_default",
+			style: ProtocolStyleLabel,
+			expect: []string{
+				`label="login (https)"`,
+				`label="events (amqp)"`,
+				`label="static (https)"`,
+			},
+			notExpect: []string{amqpColor, httpsColor, `label="Protocols"`},
+		},
+		{
+			name:  "none",
+			style: ProtocolStyleNone,
+			expect: []string{
+				`label="login"`,
+				`label="events"`,
+				`label="static"`,
+			},
+			notExpect: []string{"https", "amqp", `label="Protocols"`},
+		},
+		{
+			name:  "color",
+			style: ProtocolStyleColor,
+			expect: []string{
+				`label="login"`,
+				amqpColor,
+				httpsColor,
+				`label="Protocols"`,
+				`label="amqp"`,
+				`label="https"`,
+			},
+			notExpect: []string{`label="login (https)"`},
+		},
+		{
+			name:  "both",
+			style: ProtocolStyleBoth,
+			expect: []string{
+				`label="login (https)"`,
+				`label="events (amqp)"`,
+				amqpColor,
+				httpsColor,
+				`label="Protocols"`,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := dfd.GenerateDot("tm", DfdRenderOptions{ProtocolStyle: tc.style})
+			if err != nil {
+				t.Fatalf("GenerateDot: %s", err)
+			}
+			for _, want := range tc.expect {
+				if !strings.Contains(got, want) {
+					t.Errorf("expected %q in output:\n%s", want, got)
+				}
+			}
+			for _, unwanted := range tc.notExpect {
+				if strings.Contains(got, unwanted) {
+					t.Errorf("did not expect %q in output:\n%s", unwanted, got)
+				}
+			}
+		})
 	}
 }
 
@@ -240,7 +340,7 @@ func TestDfdDotGenerate(t *testing.T) {
 
 			for _, adfd := range tc.tm.DataFlowDiagrams {
 
-				dot, err := adfd.GenerateDot(tc.tm.Name)
+				dot, err := adfd.GenerateDot(tc.tm.Name, DfdRenderOptions{})
 
 				if err != nil {
 					if !strings.Contains(err.Error(), tc.exp) {

@@ -30,8 +30,8 @@ func safeID(prefix, name string) string {
 }
 
 // GenerateDot returns the DFD rendered as Graphviz DOT source.
-func (d *DataFlowDiagram) GenerateDot(tmName string) (string, error) {
-	g, err := d.buildDotGraph(tmName)
+func (d *DataFlowDiagram) GenerateDot(tmName string, opts DfdRenderOptions) (string, error) {
+	g, err := d.buildDotGraph(tmName, opts)
 	if err != nil {
 		return "", err
 	}
@@ -39,8 +39,8 @@ func (d *DataFlowDiagram) GenerateDot(tmName string) (string, error) {
 }
 
 // GenerateDfdPng writes the DFD as a PNG to filepath.
-func (d *DataFlowDiagram) GenerateDfdPng(filepath, tmName string) error {
-	dotSrc, err := d.GenerateDot(tmName)
+func (d *DataFlowDiagram) GenerateDfdPng(filepath, tmName string, opts DfdRenderOptions) error {
+	dotSrc, err := d.GenerateDot(tmName, opts)
 	if err != nil {
 		return err
 	}
@@ -48,8 +48,8 @@ func (d *DataFlowDiagram) GenerateDfdPng(filepath, tmName string) error {
 }
 
 // GenerateDfdSvg writes the DFD as an SVG to filepath.
-func (d *DataFlowDiagram) GenerateDfdSvg(filepath, tmName string) error {
-	dotSrc, err := d.GenerateDot(tmName)
+func (d *DataFlowDiagram) GenerateDfdSvg(filepath, tmName string, opts DfdRenderOptions) error {
+	dotSrc, err := d.GenerateDot(tmName, opts)
 	if err != nil {
 		return err
 	}
@@ -57,8 +57,8 @@ func (d *DataFlowDiagram) GenerateDfdSvg(filepath, tmName string) error {
 }
 
 // GenerateDfdPngBytes returns the DFD as PNG bytes.
-func (d *DataFlowDiagram) GenerateDfdPngBytes(tmName string) ([]byte, error) {
-	dotSrc, err := d.GenerateDot(tmName)
+func (d *DataFlowDiagram) GenerateDfdPngBytes(tmName string, opts DfdRenderOptions) ([]byte, error) {
+	dotSrc, err := d.GenerateDot(tmName, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -66,8 +66,8 @@ func (d *DataFlowDiagram) GenerateDfdPngBytes(tmName string) ([]byte, error) {
 }
 
 // GenerateDfdSvgBytes returns the DFD as SVG bytes.
-func (d *DataFlowDiagram) GenerateDfdSvgBytes(tmName string) ([]byte, error) {
-	dotSrc, err := d.GenerateDot(tmName)
+func (d *DataFlowDiagram) GenerateDfdSvgBytes(tmName string, opts DfdRenderOptions) ([]byte, error) {
+	dotSrc, err := d.GenerateDot(tmName, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -76,11 +76,11 @@ func (d *DataFlowDiagram) GenerateDfdSvgBytes(tmName string) ([]byte, error) {
 
 // generateDfdDot is the historical internal name used by tests; it stays as a
 // thin wrapper around GenerateDot.
-func (d *DataFlowDiagram) generateDfdDot(tmName string) (string, error) {
-	return d.GenerateDot(tmName)
+func (d *DataFlowDiagram) generateDfdDot(tmName string, opts DfdRenderOptions) (string, error) {
+	return d.GenerateDot(tmName, opts)
 }
 
-func (d *DataFlowDiagram) buildDotGraph(tmName string) (*dot.Graph, error) {
+func (d *DataFlowDiagram) buildDotGraph(tmName string, opts DfdRenderOptions) (*dot.Graph, error) {
 	g := dot.NewGraph(dot.Directed)
 	g.Attr("label", fmt.Sprintf("%s_%s", tmName, d.Name))
 	g.Attr("labelloc", "t")
@@ -172,6 +172,8 @@ func (d *DataFlowDiagram) buildDotGraph(tmName string) (*dot.Graph, error) {
 		addDataStore(parent, s.Name)
 	}
 
+	colors, legendOrder := assignProtocolColors(d.Flows)
+
 	for _, flow := range d.Flows {
 		from, fromOK := nodes[flow.From]
 		to, toOK := nodes[flow.To]
@@ -182,10 +184,48 @@ func (d *DataFlowDiagram) buildDotGraph(tmName string) (*dot.Graph, error) {
 			return nil, fmt.Errorf("flow %q references unknown destination node %q", flow.Name, flow.To)
 		}
 		edge := g.Edge(from, to)
-		if strings.TrimSpace(flow.Name) != "" {
-			edge.Attr("label", flow.Name)
+		if label := flowLabel(flow, opts.ProtocolStyle); label != "" {
+			edge.Attr("label", label)
+		}
+		if opts.ProtocolStyle.shouldColor() {
+			if c, ok := colors[strings.TrimSpace(flow.Protocol)]; ok {
+				edge.Attr("color", c)
+				edge.Attr("fontcolor", c)
+			}
 		}
 	}
 
+	if opts.ProtocolStyle.shouldColor() && len(legendOrder) > 0 {
+		addDotLegend(g, legendOrder, colors)
+	}
+
 	return g, nil
+}
+
+// addDotLegend builds a separate cluster_legend subgraph with one colored
+// sample edge per protocol. Source/sink nodes are invisible so only the labeled
+// edges show.
+func addDotLegend(g *dot.Graph, protocols []string, colors map[string]string) {
+	legend := g.Subgraph("cluster_legend", dot.ClusterOption{})
+	legend.Attr("label", "Protocols")
+	legend.Attr("style", "dashed")
+	legend.Attr("color", "gray")
+	legend.Attr("fontcolor", "gray")
+
+	for i, p := range protocols {
+		src := legend.Node(fmt.Sprintf("legend_src_%d", i)).
+			Attr("shape", "point").
+			Attr("style", "invis").
+			Attr("width", "0").
+			Attr("height", "0")
+		dst := legend.Node(fmt.Sprintf("legend_dst_%d", i)).
+			Attr("shape", "point").
+			Attr("style", "invis").
+			Attr("width", "0").
+			Attr("height", "0")
+		legend.Edge(src, dst).
+			Attr("label", p).
+			Attr("color", colors[p]).
+			Attr("fontcolor", colors[p])
+	}
 }

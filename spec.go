@@ -97,9 +97,10 @@ type DfdData struct {
 }
 
 type DfdFlow struct {
-	Name string `json:"name" hcl:"name,label"`
-	From string `json:"from" hcl:"from,attr"`
-	To   string `json:"to" hcl:"to,attr"`
+	Name     string `json:"name" hcl:"name,label"`
+	From     string `json:"from" hcl:"from,attr"`
+	To       string `json:"to" hcl:"to,attr"`
+	Protocol string `json:"protocol,omitempty" hcl:"protocol,optional"`
 }
 
 type DfdTrustZone struct {

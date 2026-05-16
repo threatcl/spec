@@ -22,7 +22,7 @@ type mermaidNode struct {
 // GenerateMermaid returns the DFD rendered as a Mermaid flowchart. The output
 // is plain text suitable for embedding in Markdown rendered by GitHub, GitLab,
 // or any Mermaid-aware viewer.
-func (d *DataFlowDiagram) GenerateMermaid(tmName string) (string, error) {
+func (d *DataFlowDiagram) GenerateMermaid(tmName string, opts DfdRenderOptions) (string, error) {
 	idMap := map[string]string{}
 	mermaidID := func(name string) string {
 		if id, ok := idMap[name]; ok {
@@ -108,6 +108,18 @@ func (d *DataFlowDiagram) GenerateMermaid(tmName string) (string, error) {
 		writeNode("  ", n)
 	}
 
+	colors, legendOrder := assignProtocolColors(d.Flows)
+
+	// Track running edge index so linkStyle directives line up. Mermaid
+	// indexes edges in declaration order across the whole flowchart, which is
+	// why both the flow edges and any legend edges share one counter.
+	edgeIndex := 0
+	type linkStyle struct {
+		index int
+		color string
+	}
+	var linkStyles []linkStyle
+
 	for _, flow := range d.Flows {
 		if _, ok := idMap[flow.From]; !ok {
 			return "", fmt.Errorf("flow %q references unknown source node %q", flow.Name, flow.From)
@@ -115,12 +127,37 @@ func (d *DataFlowDiagram) GenerateMermaid(tmName string) (string, error) {
 		if _, ok := idMap[flow.To]; !ok {
 			return "", fmt.Errorf("flow %q references unknown destination node %q", flow.Name, flow.To)
 		}
-		label := strings.TrimSpace(flow.Name)
+		label := flowLabel(flow, opts.ProtocolStyle)
 		if label == "" {
 			fmt.Fprintf(&b, "  %s --> %s\n", mermaidID(flow.From), mermaidID(flow.To))
 		} else {
 			fmt.Fprintf(&b, "  %s -- %q --> %s\n", mermaidID(flow.From), label, mermaidID(flow.To))
 		}
+		if opts.ProtocolStyle.shouldColor() {
+			if c, ok := colors[strings.TrimSpace(flow.Protocol)]; ok {
+				linkStyles = append(linkStyles, linkStyle{edgeIndex, c})
+			}
+		}
+		edgeIndex++
+	}
+
+	if opts.ProtocolStyle.shouldColor() && len(legendOrder) > 0 {
+		b.WriteString("  subgraph legend [\"Protocols\"]\n")
+		b.WriteString("    direction LR\n")
+		for i, p := range legendOrder {
+			src := fmt.Sprintf("legend_src_%d", i)
+			dst := fmt.Sprintf("legend_dst_%d", i)
+			fmt.Fprintf(&b, "    %s((\" \"))\n", src)
+			fmt.Fprintf(&b, "    %s((\" \"))\n", dst)
+			fmt.Fprintf(&b, "    %s -- %q --> %s\n", src, p, dst)
+			linkStyles = append(linkStyles, linkStyle{edgeIndex, colors[p]})
+			edgeIndex++
+		}
+		b.WriteString("  end\n")
+	}
+
+	for _, ls := range linkStyles {
+		fmt.Fprintf(&b, "  linkStyle %d stroke:%s,stroke-width:2px\n", ls.index, ls.color)
 	}
 
 	return b.String(), nil

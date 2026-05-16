@@ -9,7 +9,7 @@ import (
 // (https://d2lang.com). The text can be rendered to SVG/PNG with the d2 CLI or
 // the d2lib Go library; this emitter only produces source so the package keeps
 // its small dependency footprint.
-func (d *DataFlowDiagram) GenerateD2(tmName string) (string, error) {
+func (d *DataFlowDiagram) GenerateD2(tmName string, opts DfdRenderOptions) (string, error) {
 	idMap := map[string]string{}
 	d2ID := func(name string) string {
 		if id, ok := idMap[name]; ok {
@@ -116,6 +116,8 @@ func (d *DataFlowDiagram) GenerateD2(tmName string) (string, error) {
 		b.WriteString("\n")
 	}
 
+	colors, legendOrder := assignProtocolColors(d.Flows)
+
 	for _, flow := range d.Flows {
 		from, fromOK := fqid[flow.From]
 		to, toOK := fqid[flow.To]
@@ -125,12 +127,33 @@ func (d *DataFlowDiagram) GenerateD2(tmName string) (string, error) {
 		if !toOK {
 			return "", fmt.Errorf("flow %q references unknown destination node %q", flow.Name, flow.To)
 		}
-		label := strings.TrimSpace(flow.Name)
-		if label == "" {
-			fmt.Fprintf(&b, "%s -> %s\n", from, to)
-		} else {
-			fmt.Fprintf(&b, "%s -> %s: %q\n", from, to, label)
+		label := flowLabel(flow, opts.ProtocolStyle)
+		color := ""
+		if opts.ProtocolStyle.shouldColor() {
+			color = colors[strings.TrimSpace(flow.Protocol)]
 		}
+		switch {
+		case label == "" && color == "":
+			fmt.Fprintf(&b, "%s -> %s\n", from, to)
+		case color == "":
+			fmt.Fprintf(&b, "%s -> %s: %q\n", from, to, label)
+		case label == "":
+			fmt.Fprintf(&b, "%s -> %s: { style.stroke: %q }\n", from, to, color)
+		default:
+			fmt.Fprintf(&b, "%s -> %s: %q { style.stroke: %q }\n", from, to, label, color)
+		}
+	}
+
+	if opts.ProtocolStyle.shouldColor() && len(legendOrder) > 0 {
+		b.WriteString("\nlegend: \"Protocols\" {\n")
+		for i, p := range legendOrder {
+			src := fmt.Sprintf("src_%d", i)
+			dst := fmt.Sprintf("dst_%d", i)
+			fmt.Fprintf(&b, "  %s: \"\" { shape: circle; width: 8; height: 8 }\n", src)
+			fmt.Fprintf(&b, "  %s: \"\" { shape: circle; width: 8; height: 8 }\n", dst)
+			fmt.Fprintf(&b, "  %s -> %s: %q { style.stroke: %q }\n", src, dst, p, colors[p])
+		}
+		b.WriteString("}\n")
 	}
 
 	return b.String(), nil

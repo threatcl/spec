@@ -27,7 +27,7 @@ func TestDfdMermaidGenerate(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			for _, adfd := range tc.tm.DataFlowDiagrams {
-				out, err := adfd.GenerateMermaid(tc.tm.Name)
+				out, err := adfd.GenerateMermaid(tc.tm.Name, DfdRenderOptions{})
 				if err != nil {
 					t.Fatalf("%s: error generating mermaid: %s", tc.name, err)
 				}
@@ -45,7 +45,7 @@ func TestDfdMermaidParallelFlows(t *testing.T) {
 	tm := parallelFlowsDfdTm()
 	dfd := tm.DataFlowDiagrams[0]
 
-	out, err := dfd.GenerateMermaid(tm.Name)
+	out, err := dfd.GenerateMermaid(tm.Name, DfdRenderOptions{})
 	if err != nil {
 		t.Fatalf("Error generating mermaid: %s", err)
 	}
@@ -59,6 +59,83 @@ func TestDfdMermaidParallelFlows(t *testing.T) {
 	}
 }
 
+func TestDfdMermaidProtocolStyles(t *testing.T) {
+	dfd := protocolFlowsDfdTm()
+
+	// Alphabetical assignment: amqp -> palette[0], https -> palette[1].
+	const amqpColor = "#E69F00"
+	const httpsColor = "#56B4E9"
+
+	cases := []struct {
+		name      string
+		style     ProtocolStyle
+		expect    []string
+		notExpect []string
+	}{
+		{
+			name:  "label_default",
+			style: ProtocolStyleLabel,
+			expect: []string{
+				`-- "login (https)" -->`,
+				`-- "events (amqp)" -->`,
+			},
+			notExpect: []string{"linkStyle", "subgraph legend"},
+		},
+		{
+			name:  "none",
+			style: ProtocolStyleNone,
+			expect: []string{
+				`-- "login" -->`,
+				`-- "events" -->`,
+			},
+			notExpect: []string{"https", "amqp", "subgraph legend"},
+		},
+		{
+			name:  "color",
+			style: ProtocolStyleColor,
+			expect: []string{
+				`-- "login" -->`,
+				`subgraph legend ["Protocols"]`,
+				`-- "amqp" -->`,
+				`-- "https" -->`,
+				"linkStyle 0 stroke:" + httpsColor,
+				"linkStyle 1 stroke:" + amqpColor,
+				"linkStyle 2 stroke:" + httpsColor,
+			},
+			notExpect: []string{`-- "login (https)" -->`},
+		},
+		{
+			name:  "both",
+			style: ProtocolStyleBoth,
+			expect: []string{
+				`-- "login (https)" -->`,
+				`subgraph legend ["Protocols"]`,
+				"linkStyle 0 stroke:" + httpsColor,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := dfd.GenerateMermaid("tm", DfdRenderOptions{ProtocolStyle: tc.style})
+			if err != nil {
+				t.Fatalf("GenerateMermaid: %s", err)
+			}
+			for _, want := range tc.expect {
+				if !strings.Contains(got, want) {
+					t.Errorf("expected %q in output:\n%s", want, got)
+				}
+			}
+			for _, unwanted := range tc.notExpect {
+				if strings.Contains(got, unwanted) {
+					t.Errorf("did not expect %q in output:\n%s", unwanted, got)
+				}
+			}
+		})
+	}
+}
+
 func TestDfdMermaidUnknownFlowEndpoint(t *testing.T) {
 	tm := &Threatmodel{
 		Name: "broken",
@@ -67,7 +144,7 @@ func TestDfdMermaidUnknownFlowEndpoint(t *testing.T) {
 			Flows:     []*DfdFlow{{Name: "flow", From: "p1", To: "ghost"}},
 		}},
 	}
-	_, err := tm.DataFlowDiagrams[0].GenerateMermaid(tm.Name)
+	_, err := tm.DataFlowDiagrams[0].GenerateMermaid(tm.Name, DfdRenderOptions{})
 	if err == nil {
 		t.Fatal("expected error for unknown flow endpoint, got nil")
 	}
