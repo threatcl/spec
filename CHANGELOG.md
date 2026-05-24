@@ -1,3 +1,13 @@
+## 0.2.6
+
+### May 24, 2026
+
+CHANGES:
+
+* Fixed `HclString()` round-tripping: `[]*Struct` fields tagged `hcl:"...,block"` (such as nested `control` blocks inside a `threat`) now emit proper repeated block syntax instead of degrading to a list-of-objects attribute (`control = [{...}]`). The previous output did not parse back as a valid threat model.
+* Round-tripped HCL no longer emits noise for zero-valued optional fields (`imports = null`, `created_at = 0`, `stride = []`, etc.).
+* `ExpandedControls` is cleared during HCL emission to avoid duplicating controls that were merged into `Controls` at parse time.
+
 ## 0.2.5
 
 ### May 16, 2026

@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclparse"
-	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -56,12 +55,14 @@ func (p *ThreatmodelParser) HclString() string {
 	for _, tm := range p.wrapped.Threatmodels {
 		for _, threat := range tm.Threats {
 			threat.ControlImports = nil
+			// ExpandedControls are merged into Controls during parsing
+			// (see processControlImports); clearing here prevents the
+			// round-tripped HCL from duplicating them as both `control`
+			// and `expanded_control` blocks.
+			threat.ExpandedControls = nil
 		}
 	}
-	hclOut := hclwrite.NewEmptyFile()
-	gohcl.EncodeIntoBody(p.wrapped, hclOut.Body())
-
-	return string(hclOut.Bytes())
+	return string(encodeWrappedToHCL(p.wrapped))
 }
 
 func (p *ThreatmodelParser) AddTMAndWrite(tm Threatmodel, f io.Writer, debug bool) error {
@@ -79,9 +80,7 @@ func (p *ThreatmodelParser) AddTMAndWrite(tm Threatmodel, f io.Writer, debug boo
 
 	w := bufio.NewWriter(f)
 	defer w.Flush()
-	hclOut := hclwrite.NewEmptyFile()
-	gohcl.EncodeIntoBody(p.wrapped, hclOut.Body())
-	_, err := w.Write(hclOut.Bytes())
+	_, err := w.Write(encodeWrappedToHCL(p.wrapped))
 	if err != nil {
 		return err
 	}
