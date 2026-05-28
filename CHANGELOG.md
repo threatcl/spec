@@ -1,3 +1,11 @@
+## 0.2.7
+
+### May 28, 2026
+
+CHANGES:
+
+* Information Asset blocks now support an optional ref attribute
+
 ## 0.2.6
 
 ### May 24, 2026

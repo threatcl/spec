@@ -1,4 +1,4 @@
-spec_version = "0.2.6"
+spec_version = "0.2.7"
 
 threatmodel "test_dedup" {
   author = "@test"

@@ -16,6 +16,7 @@ type InformationAsset struct {
 	Description               string `json:"description,omitempty" hcl:"description,optional"`
 	InformationClassification string `json:"informationClassification,omitempty" hcl:"information_classification,optional"`
 	Source                    string `json:"source,omitempty" hcl:"source,optional"`
+	Ref                       string `json:"ref,omitempty" hcl:"ref,optional"`
 }
 
 type Threat struct {
