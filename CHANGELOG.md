@@ -1,3 +1,11 @@
+## 0.2.8
+
+### Jun 6, 2026
+
+CHANGES:
+
+* Threat models now support a top-level `mermaid` block for embedding free-form mermaid diagrams. Each block takes a title label, a required `content` attribute (the raw mermaid source, idiomatically a heredoc), and an optional `description`. Multiple `mermaid` blocks are allowed per threat model, mirroring `data_flow_diagram_v2`. The diagram type is inferred by mermaid from the first line of `content`, so there is no `type`/`engine` attribute.
+
 ## 0.2.7
 
 ### May 28, 2026

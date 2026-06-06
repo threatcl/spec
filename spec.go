@@ -120,6 +120,17 @@ type LegacyDataFlowDiagram struct {
 	ImportFile       string          `json:"import,omitempty" hcl:"import,optional"`
 }
 
+// MermaidDiagram is a free-form mermaid diagram embedded in a threat model.
+// The block label is the diagram's title and Content holds the raw mermaid
+// source verbatim (a heredoc is the idiomatic input form). Mermaid infers the
+// diagram type from the first line of Content, so there is deliberately no
+// type/engine attribute.
+type MermaidDiagram struct {
+	Name        string `json:"name" hcl:"name,label"`
+	Description string `json:"description,omitempty" hcl:"description,optional"`
+	Content     string `json:"content" hcl:"content"`
+}
+
 type DataFlowDiagram struct {
 	Name              string          `json:"name" hcl:"name,label"`
 	ShiftedFromLegacy bool            `json:"-"`
@@ -150,6 +161,7 @@ type Threatmodel struct {
 	Exclusions             []*Exclusion            `json:"exclusion,omitempty" hcl:"exclusion,block"`
 	ThirdPartyDependencies []*ThirdPartyDependency `json:"thirdPartyDependency,omitempty" hcl:"third_party_dependency,block"`
 	DataFlowDiagrams       []*DataFlowDiagram      `json:"dataFlowDiagram,omitempty" hcl:"data_flow_diagram_v2,block"`
+	MermaidDiagrams        []*MermaidDiagram       `json:"mermaidDiagram,omitempty" hcl:"mermaid,block"`
 	LegacyDfd              *LegacyDataFlowDiagram  `json:"legacyDataFlowDiagram,omitempty" hcl:"data_flow_diagram,block"`
 }
 
