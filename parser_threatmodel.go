@@ -62,6 +62,10 @@ func (tm *Threatmodel) Include(cfg *ThreatmodelSpecConfig, myfilename string) er
 		tm.addDfdIfNotExist(*dfd)
 	}
 
+	for _, mermaid := range subTm.MermaidDiagrams {
+		tm.addMermaidIfNotExist(*mermaid)
+	}
+
 	for _, t := range subTm.Threats {
 		tm.addTIfNotExist(*t)
 	}
@@ -152,6 +156,20 @@ func (tm *Threatmodel) addDfdIfNotExist(newDfd DataFlowDiagram) {
 
 	if !dfdFound {
 		tm.DataFlowDiagrams = append(tm.DataFlowDiagrams, &newDfd)
+	}
+}
+
+func (tm *Threatmodel) addMermaidIfNotExist(newMermaid MermaidDiagram) {
+
+	mermaidFound := false
+	for _, mermaid := range tm.MermaidDiagrams {
+		if newMermaid.Name == mermaid.Name {
+			mermaidFound = true
+		}
+	}
+
+	if !mermaidFound {
+		tm.MermaidDiagrams = append(tm.MermaidDiagrams, &newMermaid)
 	}
 }
 

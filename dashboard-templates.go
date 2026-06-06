@@ -157,6 +157,21 @@ _Implementation Notes_
 {{- end }}
 {{- end }}
 {{- end}}
+{{- with .MermaidDiagrams }}
+
+## Diagrams
+{{ range . }}
+### {{ .Name }}
+{{- if .Description }}
+
+{{ .Description }}
+{{- end }}
+
+` + "```" + `mermaid
+{{ .Content }}
+` + "```" + `
+{{- end }}
+{{- end }}
 
 {{- if .CreatedAt }}
 {{- if .UpdatedAt }}
