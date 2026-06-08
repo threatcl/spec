@@ -1,3 +1,11 @@
+## 0.3.0
+
+## Jun 8, 2026
+
+CHANGES:
+
+* Bumping cleanly to 0.3.0 (feature wise, same as 0.2.9)
+
 ## 0.2.9
 
 ### Jun 8, 2026
