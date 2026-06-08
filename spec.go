@@ -31,6 +31,24 @@ type Threat struct {
 	ExpandedControls     []*Control         `json:"-" hcl:"expanded_control,block"`
 	ControlImports       []string           `json:"-" hcl:"control_imports,optional"`
 	Ref                  string             `json:"ref,omitempty" hcl:"ref,optional"`
+	Risk                 *Risk              `json:"risk,omitempty" hcl:"risk,block"`
+}
+
+// Risk is an optional, methodology-neutral risk rating attached to a threat.
+// Likelihood and Impact are ordinal enums (very_low|low|medium|high|very_high)
+// and are required when the risk block is present. Severity is normally
+// COMPUTED from the likelihood×impact matrix (see Risk.Severity), but an author
+// may override it. Rationale is free text that maps onto OTM's
+// likelihoodComment/impactComment on export. The risk block as a whole is
+// optional on a threat, so existing models stay valid.
+type Risk struct {
+	Likelihood string `json:"likelihood" hcl:"likelihood,attr"`
+	Impact     string `json:"impact" hcl:"impact,attr"`
+	// SeverityOverride is the optional author-supplied `severity` value. When
+	// empty, severity is computed from the likelihood×impact matrix. Use the
+	// Severity() method to get the resolved (override-or-computed) band.
+	SeverityOverride string `json:"severity,omitempty" hcl:"severity,optional"`
+	Rationale        string `json:"rationale,omitempty" hcl:"rationale,optional"`
 }
 
 type ProposedControl struct {

@@ -48,6 +48,27 @@ func (p *ThreatmodelParser) normalizeStride(in string) string {
 	return ""
 }
 
+// normalizeRiskLevel canonicalises a likelihood/impact enum (case-, space- and
+// hyphen-insensitive). Returns the canonical token (e.g. "very_high") if valid,
+// or "" if it isn't a known risk level.
+func (p *ThreatmodelParser) normalizeRiskLevel(in string) string {
+	token := canonicalRiskToken(in)
+	if p.riskLevels[token] {
+		return token
+	}
+	return ""
+}
+
+// normalizeSeverity canonicalises a severity band override. Returns the
+// canonical band (e.g. "critical") if valid, or "" if it isn't a known band.
+func (p *ThreatmodelParser) normalizeSeverity(in string) string {
+	token := canonicalRiskToken(in)
+	if p.severityLevels[token] {
+		return token
+	}
+	return ""
+}
+
 func (p *ThreatmodelParser) normalizeUptimeDepClassification(in string) UptimeDependencyClassification {
 	if p.uptimeDepClassification[strings.ToLower(in)] {
 		return UptimeDependencyClassification(strings.ToLower(in))

@@ -55,6 +55,29 @@ func (tm *Threatmodel) RenderOtm() (otm.OtmSchemaJson, error) {
 
 		threat.Categories = categories
 
+		// Map the optional risk block onto OTM's threat-level risk object
+		// (likelihood/impact on a 0–100 scale, rationale into the comments) and
+		// carry threatcl's computed severity/residual values as attributes,
+		// since OTM has no native severity field.
+		if t.Risk != nil {
+			threat.Risk = otm.OtmSchemaJsonThreatsElemRisk{
+				Likelihood: pFloat(float64(defaultRiskModel.OtmValues[t.Risk.Likelihood])),
+				Impact:     float64(defaultRiskModel.OtmValues[t.Risk.Impact]),
+			}
+			if t.Risk.Rationale != "" {
+				threat.Risk.LikelihoodComment = pToStr(t.Risk.Rationale)
+				threat.Risk.ImpactComment = pToStr(t.Risk.Rationale)
+			}
+
+			riskAttr := map[string]interface{}{
+				"risk_severity":          t.Risk.Severity(),
+				"risk_inherent_score":    t.Risk.InherentScore(),
+				"risk_residual_score":    t.ResidualScore(),
+				"risk_residual_severity": t.ResidualSeverity(),
+			}
+			threat.Attributes = riskAttr
+		}
+
 		o.Threats = append(o.Threats, threat)
 
 		// We add mitigations while we're in here
@@ -122,6 +145,10 @@ func (tm *Threatmodel) getAttributes() map[string]interface{} {
 
 func pToStr(s string) *string {
 	return &s
+}
+
+func pFloat(f float64) *float64 {
+	return &f
 }
 
 func toKebabCase(s string) string {

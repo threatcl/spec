@@ -596,6 +596,41 @@ func (tm *Threatmodel) ValidateTm(p *ThreatmodelParser) error {
 					)
 				}
 			}
+
+			// Normalize and validate the optional risk block. likelihood and
+			// impact presence is enforced by HCL (they're required attrs); here
+			// we check they're valid enums and canonicalise them, plus validate
+			// any severity override.
+			if tr.Risk != nil {
+				if norm := p.normalizeRiskLevel(tr.Risk.Likelihood); norm != "" {
+					tr.Risk.Likelihood = norm
+				} else {
+					errMap = multierror.Append(errMap, fmt.Errorf(
+						"TM '%s' / Threat '%s': invalid risk likelihood '%s' (expected one of: %s)",
+						tm.Name, tr.Description, tr.Risk.Likelihood, strings.Join(RiskLevels, ", "),
+					))
+				}
+
+				if norm := p.normalizeRiskLevel(tr.Risk.Impact); norm != "" {
+					tr.Risk.Impact = norm
+				} else {
+					errMap = multierror.Append(errMap, fmt.Errorf(
+						"TM '%s' / Threat '%s': invalid risk impact '%s' (expected one of: %s)",
+						tm.Name, tr.Description, tr.Risk.Impact, strings.Join(RiskLevels, ", "),
+					))
+				}
+
+				if tr.Risk.SeverityOverride != "" {
+					if norm := p.normalizeSeverity(tr.Risk.SeverityOverride); norm != "" {
+						tr.Risk.SeverityOverride = norm
+					} else {
+						errMap = multierror.Append(errMap, fmt.Errorf(
+							"TM '%s' / Threat '%s': invalid risk severity '%s' (expected one of: %s)",
+							tm.Name, tr.Description, tr.Risk.SeverityOverride, strings.Join(SeverityLevels, ", "),
+						))
+					}
+				}
+			}
 		}
 	}
 

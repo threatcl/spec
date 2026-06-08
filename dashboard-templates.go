@@ -89,6 +89,18 @@ Diagram: {{ . }}
 
 > STRIDE: {{ $stride := .Stride }}{{ range $index, $elem := .Stride }}{{ if $index}}, {{end}}{{.}}{{end}}
 {{- end}}
+{{- with .Risk }}
+
+> Risk: Likelihood _{{ .Likelihood }}_ × Impact _{{ .Impact }}_ → Inherent Severity **{{ .Severity }}** (score {{ .InherentScore }})
+{{- if .Rationale }}
+>
+> {{ .Rationale }}
+{{- end }}
+{{- end }}
+{{- if and .Risk (gt .ResidualRiskReduction 0.0) }}
+
+> Residual Risk (after implemented controls): score {{ .ResidualScore }} (**{{ .ResidualSeverity }}**, {{ .ResidualRiskReduction }}% reduced)
+{{- end }}
 {{- if .InformationAssetRefs }}
 
 Impacted Information Assets:
