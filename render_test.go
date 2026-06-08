@@ -1,6 +1,7 @@
 package spec
 
 import (
+	"io"
 	"strings"
 	"testing"
 )
@@ -70,6 +71,38 @@ func TestTPDRender(t *testing.T) {
 			}
 
 		})
+	}
+}
+
+func TestRenderMarkdownRepository(t *testing.T) {
+	tm := &Threatmodel{
+		Name:   "test",
+		Author: "x",
+		Repository: []string{
+			"https://github.com/threatcl/spec",
+			"https://gitlab.com/threatcl/example",
+		},
+	}
+
+	out, err := tm.RenderMarkdown(TmMDTemplate)
+	if err != nil {
+		t.Fatalf("Error rendering TM: %s", err)
+	}
+
+	buf := new(strings.Builder)
+	if _, err := io.Copy(buf, out); err != nil {
+		t.Fatalf("Error reading rendered output: %s", err)
+	}
+	rendered := buf.String()
+
+	if !strings.Contains(rendered, "## Repositories") {
+		t.Errorf("Rendered markdown missing Repositories heading:\n%s", rendered)
+	}
+
+	for _, repo := range tm.Repository {
+		if !strings.Contains(rendered, repo) {
+			t.Errorf("Rendered markdown missing repository %q:\n%s", repo, rendered)
+		}
 	}
 }
 
@@ -157,6 +190,18 @@ func TestRenderMarkdown(t *testing.T) {
 				Name:        "test",
 				Author:      "x",
 				DiagramLink: "http://example.com/test.png",
+			},
+			"",
+			false,
+		},
+		{
+			"valid_tm_with_repository",
+			&Threatmodel{
+				Name:   "test",
+				Author: "x",
+				Repository: []string{
+					"https://github.com/threatcl/spec",
+				},
 			},
 			"",
 			false,

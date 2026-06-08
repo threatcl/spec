@@ -99,6 +99,9 @@ func TestRenderOtm(t *testing.T) {
 		Author:      "x",
 		DiagramLink: "http://linkieboop",
 		Attributes:  tmAttr,
+		Repository: []string{
+			"https://github.com/threatcl/spec",
+		},
 	}
 	tm.AdditionalAttributes = append(tm.AdditionalAttributes, additionalAttr)
 	ia := &InformationAsset{
@@ -141,6 +144,10 @@ func TestRenderOtm(t *testing.T) {
 
 	if !strings.Contains(string(jsonOut), "name\":\"test") {
 		t.Errorf("Json (%s) didn't equal", string(jsonOut))
+	}
+
+	if !strings.Contains(string(jsonOut), "https://github.com/threatcl/spec") {
+		t.Errorf("Json (%s) didn't include the repository attribute", string(jsonOut))
 	}
 
 }

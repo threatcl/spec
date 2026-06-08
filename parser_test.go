@@ -124,6 +124,43 @@ func TestParseHCLFile(t *testing.T) {
 	}
 }
 
+func TestParseRepository(t *testing.T) {
+	defaultCfg := &ThreatmodelSpecConfig{}
+	defaultCfg.setDefaults()
+	tmParser := NewThreatmodelParser(defaultCfg)
+
+	err := tmParser.ParseHCLFile("./testdata/tm1.hcl", false)
+	if err != nil {
+		t.Fatalf("Error parsing legit TM file: %s", err)
+	}
+
+	var found *Threatmodel
+	for i, tm := range tmParser.GetWrapped().Threatmodels {
+		if tm.Name == "tm tm1 two" {
+			found = &tmParser.GetWrapped().Threatmodels[i]
+		}
+	}
+
+	if found == nil {
+		t.Fatal("Couldn't find the 'tm tm1 two' threat model")
+	}
+
+	exp := []string{
+		"https://github.com/threatcl/spec",
+		"https://gitlab.com/threatcl/example",
+	}
+
+	if len(found.Repository) != len(exp) {
+		t.Fatalf("Expected %d repository entries, got %d", len(exp), len(found.Repository))
+	}
+
+	for i, want := range exp {
+		if found.Repository[i] != want {
+			t.Errorf("Expected repository[%d] to be %q, got %q", i, want, found.Repository[i])
+		}
+	}
+}
+
 func TestParseJsonFile(t *testing.T) {
 	defaultCfg := &ThreatmodelSpecConfig{}
 	defaultCfg.setDefaults()

@@ -149,6 +149,7 @@ type Threatmodel struct {
 	Including              string                  `json:"including,omitempty" hcl:"including,optional"`
 	Link                   string                  `json:"link,omitempty" hcl:"link,optional"`
 	DiagramLink            string                  `json:"diagramLink,omitempty" hcl:"diagram_link,optional"`
+	Repository             []string                `json:"repository,omitempty" hcl:"repository,optional"`
 	AllDiagrams            []string                `json:"-"` // Used for templates
 	Author                 string                  `json:"author" hcl:"author,attr"`
 	CreatedAt              int64                   `json:"createdAt,omitempty" hcl:"created_at,optional"`

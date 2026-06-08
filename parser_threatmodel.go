@@ -38,6 +38,10 @@ func (tm *Threatmodel) Include(cfg *ThreatmodelSpecConfig, myfilename string) er
 		tm.DiagramLink = subTm.DiagramLink
 	}
 
+	if len(tm.Repository) == 0 {
+		tm.Repository = subTm.Repository
+	}
+
 	if tm.Attributes == nil {
 		tm.Attributes = subTm.Attributes
 	}

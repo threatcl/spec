@@ -109,6 +109,10 @@ func (tm *Threatmodel) getAttributes() map[string]interface{} {
 		attr["initiative_size"] = tm.Attributes.InitiativeSize
 	}
 
+	if len(tm.Repository) > 0 {
+		attr["repository"] = tm.Repository
+	}
+
 	for _, atrVal := range tm.AdditionalAttributes {
 		attr[toKebabUnder(atrVal.Name)] = atrVal.Value
 	}

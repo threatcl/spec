@@ -31,6 +31,13 @@ Diagram: {{ .DiagramLink }}
 Diagram: {{ . }}
 {{- end }}
 {{- end }}
+{{- with .Repository }}
+
+## Repositories
+{{ range . }}
+* {{ . }}
+{{- end }}
+{{- end }}
 {{- with .Attributes }}
 
 |    |    |
