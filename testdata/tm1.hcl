@@ -56,6 +56,7 @@ EOT
    link = "https://"
    author = "@cfrichot"
    diagram_link = "https://i.imgur.com/AzxrMsp.jpg"
+   repository = ["https://github.com/threatcl/spec", "https://gitlab.com/threatcl/example"]
    created_at = 1594033151
    updated_at = 1594033160
 

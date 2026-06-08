@@ -1,3 +1,12 @@
+## 0.2.9
+
+### Jun 8, 2026
+
+CHANGES:
+
+* Threat models now support an optional top-level `repository` attribute for linking to source code repositories (e.g. GitHub, GitLab). It takes a list of full URLs (scheme included), so a single threat model can reference multiple repositories: `repository = ["https://github.com/org/repo"]`. The value is treated as a free-form list of strings (consistent with `link`/`diagram_link`), is inherited by including threat models when not otherwise set, renders as a `## Repositories` section in Markdown, and is emitted under `project.attributes.repository` when exporting to OTM.
+* `threat` blocks now support an optional `risk` block for rating a threat. It takes a required `likelihood` and `impact` (ordinal enums: `very_low`, `low`, `medium`, `high`, `very_high`), an optional `rationale`, and an optional `severity` override; by default `severity` is computed from a built-in likelihood×impact matrix. The tool also derives an inherent score and a residual score/severity that factors in the `risk_reduction` of implemented controls, and maps `likelihood`/`impact` onto the threat's `risk` object when exporting to OTM.
+
 ## 0.2.8
 
 ### Jun 6, 2026

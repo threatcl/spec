@@ -22,6 +22,8 @@ type ThreatmodelParser struct {
 	infoClassifications            map[string]bool
 	impactTypes                    map[string]bool
 	strideElements                 map[string]bool
+	riskLevels                     map[string]bool
+	severityLevels                 map[string]bool
 	uptimeDepClassification        map[string]bool
 	defaultUptimeDepClassification UptimeDependencyClassification
 	defaultInfoClassification      string
@@ -35,6 +37,8 @@ func NewThreatmodelParser(cfg *ThreatmodelSpecConfig) *ThreatmodelParser {
 		infoClassifications:     map[string]bool{},
 		impactTypes:             map[string]bool{},
 		strideElements:          map[string]bool{},
+		riskLevels:              map[string]bool{},
+		severityLevels:          map[string]bool{},
 		uptimeDepClassification: map[string]bool{},
 		wrapped:                 &ThreatmodelWrapped{},
 		specCfg:                 cfg,
@@ -43,6 +47,8 @@ func NewThreatmodelParser(cfg *ThreatmodelSpecConfig) *ThreatmodelParser {
 	tmParser.populateInfoClassifications()
 	tmParser.populateImpactTypes()
 	tmParser.populateStrideElements()
+	tmParser.populateRiskLevels()
+	tmParser.populateSeverityLevels()
 	tmParser.populateUptimeDepClassifications()
 	return tmParser
 }
