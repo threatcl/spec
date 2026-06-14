@@ -1,6 +1,14 @@
+## 0.3.1
+
+### Jun 14, 2026
+
+CHANGES:
+
+* Added the underlying spec support for LSP implementation
+
 ## 0.3.0
 
-## Jun 8, 2026
+### Jun 8, 2026
 
 CHANGES:
 
