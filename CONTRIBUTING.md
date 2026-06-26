@@ -41,9 +41,26 @@ To release a new version:
 * Update the [CHANGELOG](CHANGELOG.md)
 * Once the main branch has been merged and updated and all the [actions](https://github.com/threatcl/threatcl/actions) are complete - this is basically setup to release "dev" release (without docker)
 * Once that's complete and you're ready to do the primary release, you tag
-* `git tag -a vN.N.N -m 'vN.N.N'`
+* `git tag -s vN.N.N -m 'vN.N.N'` (a **signed** tag — see [Signing](#signing) below)
 * `git push --tags`
 * Finally, you'll need to adjust the go.mod in http://github.com/threatcl/threatcl
+
+## Signing
+
+Commits that land on `main` and release tags should be cryptographically
+signed. The simplest setup uses your existing SSH key (no GPG required):
+
+```
+git config --global gpg.format ssh
+git config --global user.signingkey ~/.ssh/id_ed25519.pub
+git config --global commit.gpgsign true
+git config --global tag.gpgsign true
+```
+
+Then add that key to GitHub as a **Signing Key** (Settings → SSH and GPG keys →
+New SSH key → key type "Signing key"). After that, `git tag -s` produces signed
+tags and your commits show as *Verified*. See [docs/SLSA.md](docs/SLSA.md) for
+how this maps to the SLSA Source track.
 
 Thanks,
 Christian @xntrik Frichot
