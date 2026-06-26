@@ -1,0 +1,33 @@
+# Dependabot keeps our pinned GitHub Actions and Go modules current and
+# auditable. Action updates arrive as SHA bumps (matching our pin-by-SHA
+# policy); review and merge them like any other PR.
+# Docs: https://docs.github.com/code-security/dependabot/dependabot-version-updates
+version: 2
+updates:
+  # Pinned GitHub Actions (SHAs in .github/workflows/*). Grouped into one PR
+  # since there are only a handful of actions.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # Go module dependencies. Minor/patch bumps are grouped to keep noise down
+  # over this large (mostly indirect) dependency tree; major bumps get their
+  # own PR so they can be reviewed individually.
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore"
+    groups:
+      go-modules:
+        update-types:
+          - "minor"
+          - "patch"
