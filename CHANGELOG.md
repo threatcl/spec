@@ -1,3 +1,11 @@
+## 0.4.0
+
+### June 27, 2026
+
+CHANGES:
+
+* Added an optional `segment` attribute to the `backend` block
+
 ## 0.3.3
 
 ### June 27, 2026
