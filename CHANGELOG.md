@@ -1,3 +1,11 @@
+## 0.3.2
+
+### Jun 27 2026
+
+CHANGES:
+
+* No changes - this was a build attestation release only
+
 ## 0.3.1
 
 ### Jun 14, 2026
