@@ -12,6 +12,9 @@ test: ## Run go test
 build: ## Build with version information
 	$(GO_CMD) build -ldflags "-X github.com/threatcl/spec.Version=$(VERSION)"
 
+version: ## Print the version from version.go (used by the release workflow)
+	@echo $(VERSION)
+
 bump-version: ## Bump version (usage: make bump-version OLD=0.2.1 NEW=0.2.2)
 	@if [ -z "$(OLD)" ] || [ -z "$(NEW)" ]; then \
 		echo "Usage: make bump-version OLD=x.y.z NEW=x.y.z"; \
@@ -23,4 +26,4 @@ bump-version: ## Bump version (usage: make bump-version OLD=0.2.1 NEW=0.2.2)
 help: ## Output make targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: vet test build bump-version help
+.PHONY: vet test build version bump-version help
