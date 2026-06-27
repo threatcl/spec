@@ -4,7 +4,7 @@ package spec
 // This can be overridden at build time using:
 //
 //	go build -ldflags "-X github.com/threatcl/spec.Version=x.y.z"
-var Version = "0.3.1"
+var Version = "0.3.2"
 
 // OtmVersion is the Open Threat Model format version.
 // This can be overridden at build time using:
