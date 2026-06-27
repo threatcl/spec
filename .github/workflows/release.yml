@@ -1,0 +1,59 @@
+name: release
+
+# Cut a release by pushing a signed tag:  git tag -s vX.Y.Z -m vX.Y.Z && git push --tags
+on:
+  push:
+    tags:
+      - 'v*'
+
+# Least privilege by default; the release job escalates only what it needs.
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write      # create the GitHub Release and upload assets
+      id-token: write      # OIDC token for Sigstore signing of provenance
+      attestations: write  # store the build-provenance attestation
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Build deterministic source archive + checksums
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          # Guard: the pushed tag must match version.go (via the Makefile's
+          # existing version logic — no duplication of where the version lives).
+          GO_VERSION="$(make version)"
+          if [ "${GO_VERSION}" != "${VERSION}" ]; then
+            echo "::error::tag ${TAG} (=> ${VERSION}) does not match version.go (${GO_VERSION}); bump version.go before tagging"
+            exit 1
+          fi
+          PREFIX="spec-${VERSION}"
+          # Reproducible archive: git archive uses fixed (commit-time) mtimes and
+          # gzip -n drops the timestamp/name, so the bytes are reproducible.
+          git archive --format=tar --prefix="${PREFIX}/" HEAD | gzip -9 -n > "${PREFIX}.tar.gz"
+          sha256sum "${PREFIX}.tar.gz" > SHA256SUMS
+          echo "ARCHIVE=${PREFIX}.tar.gz" >> "${GITHUB_ENV}"
+          cat SHA256SUMS
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-path: |
+            spec-*.tar.gz
+            SHA256SUMS
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create "${GITHUB_REF_NAME}" \
+            "${ARCHIVE}" SHA256SUMS \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes
