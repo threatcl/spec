@@ -1,6 +1,14 @@
+## 0.3.3
+
+### June 27, 2026
+
+CHANGES:
+
+* Bumped some deps, no direct API/Library changes
+
 ## 0.3.2
 
-### Jun 27 2026
+### Jun 27, 2026
 
 CHANGES:
 
