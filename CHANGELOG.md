@@ -1,4 +1,6 @@
-## Unreleased
+## 0.5.0
+
+### Jul, 5 2026
 
 CHANGES:
 
