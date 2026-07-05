@@ -5,11 +5,13 @@ Software Artifacts) posture of `github.com/threatcl/spec`. It states where we
 are today, where we're going, and maps every planned change to a specific SLSA
 **track** and **level**.
 
-> **Status:** Phases 0–4 complete. Phase 2 rulesets are active on the repo
+> **Status:** Phases 0–5 complete. Phase 2 rulesets are active on the repo
 > (commit + tag signing in force); the first attested release is produced when
 > the next `vX.Y.Z` tag is pushed (see [Verification](#verification)). Phase 4
 > adds scanning (govulncheck, dependency-review, zizmor, CodeQL), runner
 > hardening, and per-release SBOMs — mirroring `threatcl/threatcl`'s phase 5.
+> Phase 5 flips harden-runner from egress *auditing* to egress *enforcement*
+> (`block` + per-job `allowed-endpoints`) on every workflow job.
 
 ## What this repo is (and why it matters for SLSA)
 
@@ -103,6 +105,7 @@ Source and Build tracks trustworthy (and improve OpenSSF Scorecard).
 | **4** | CodeQL with `security-extended` | Hygiene — SAST over the library source |
 | **4** | harden-runner (egress audit) + `persist-credentials: false` on every job | Hygiene — runner egress visibility; no ambient git credentials after checkout |
 | **4** | SPDX SBOM per released archive (checksummed + attested) | Strengthens Build-track artifact transparency |
+| **5** | harden-runner `egress-policy: block` + per-job `allowed-endpoints` on every job | Hygiene — egress *enforcement*: a compromised dependency or action can no longer exfiltrate to arbitrary hosts |
 
 ### Caveat on "Build L3" via native GitHub attestations
 
@@ -150,6 +153,15 @@ bounded — the high-value compiled-binary provenance belongs downstream in the
   `golang.org/x/net` (v0.55.0), and `github.com/go-jose/go-jose/v4` (v4.1.4).
   All new actions are SHA-pinned with version comments and least-privilege
   `permissions`.
+- [x] **Phase 5** — Egress enforcement (mirrors `threatcl/threatcl` phase 6):
+  every job's harden-runner flipped from `egress-policy: audit` to `block`
+  with an explicit per-job `allowed-endpoints` list, derived from the
+  StepSecurity audit baselines observed since Phase 4 landed, plus
+  documented cache-miss paths (Go toolchain/module infra) and, for the
+  release job — which has not yet run under harden-runner — the publish
+  endpoints (release upload, Sigstore keyless signing). If a release fails
+  on a blocked endpoint, fix the list on `main` and re-tag the next patch
+  version; a failed run publishes nothing.
 
 ## Maintainer checklist — GitHub settings (Phase 2)
 
