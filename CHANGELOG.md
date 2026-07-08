@@ -1,6 +1,15 @@
+## 0.5.2
+
+### Jul 9, 2026
+
+CHANGES:
+
+- No API changes
+- Bumping go standard buildchain and other deps
+
 ## 0.5.1
 
-### Jul, 5 2026
+### Jul 5, 2026
 
 CHANGES:
 
@@ -8,7 +17,7 @@ CHANGES:
 
 ## 0.5.0
 
-### Jul, 5 2026
+### Jul 5, 2026
 
 CHANGES:
 
