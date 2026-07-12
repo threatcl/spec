@@ -1,4 +1,4 @@
-spec_version = "0.5.2"
+spec_version = "0.5.3"
 
 threatmodel "slug refs" {
   author = "@xntrik"

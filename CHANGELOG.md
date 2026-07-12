@@ -1,3 +1,12 @@
+## 0.5.3
+
+### Jul 12, 2026
+
+CHANGES:
+
+* No API changes
+* Bumping some of the go deps
+
 ## 0.5.2
 
 ### Jul 9, 2026
