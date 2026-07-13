@@ -405,7 +405,6 @@ func backendBlock() BlockSchema {
 			{Name: "organization", Required: true, Type: "string", Doc: "Backend organization."},
 			{Name: "threatmodel", Type: "string", Doc: "Backend threatmodel short name."},
 			{Name: "project", Type: "string", Doc: "Backend project."},
-			{Name: "segment", Type: "string", Doc: "Backend threatmodel segment."},
 		}},
 	}
 }

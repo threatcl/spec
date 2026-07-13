@@ -218,7 +218,6 @@ type Backend struct {
 	BackendOrg     string `json:"organization" hcl:"organization,attr"`
 	BackendTMShort string `json:"threatmodel,omitempty" hcl:"threatmodel,optional"`
 	BackendProject string `json:"project,omitempty" hcl:"project,optional"`
-	BackendSegment string `json:"segment,omitempty" hcl:"segment,optional"`
 }
 
 type ThreatmodelWrapped struct {

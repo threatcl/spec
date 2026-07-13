@@ -29,6 +29,7 @@ type ThreatmodelParser struct {
 	defaultInfoClassification      string
 	wrapped                        *ThreatmodelWrapped
 	specCfg                        *ThreatmodelSpecConfig
+	skipExtendsResolution          bool
 }
 
 func NewThreatmodelParser(cfg *ThreatmodelSpecConfig) *ThreatmodelParser {
@@ -55,6 +56,16 @@ func NewThreatmodelParser(cfg *ThreatmodelSpecConfig) *ThreatmodelParser {
 
 func (p *ThreatmodelParser) GetWrapped() *ThreatmodelWrapped {
 	return p.wrapped
+}
+
+// SetSkipExtendsResolution controls whether parsing resolves `extends`
+// inheritance across the parsed content. When skipped, an extends target
+// missing from the parsed content is not an error and no inherited entities
+// are materialized — the Extends field stays populated for the consumer to
+// resolve later, so a single file of a multi-file set can be parsed
+// file-faithfully. All other validation and normalization is unchanged.
+func (p *ThreatmodelParser) SetSkipExtendsResolution(skip bool) {
+	p.skipExtendsResolution = skip
 }
 
 func (p *ThreatmodelParser) HclString() string {
@@ -203,8 +214,10 @@ func (p *ThreatmodelParser) validateTms() error {
 		}
 	}
 
-	if err := p.resolveExtends(); err != nil {
-		errMap = multierror.Append(errMap, err)
+	if !p.skipExtendsResolution {
+		if err := p.resolveExtends(); err != nil {
+			errMap = multierror.Append(errMap, err)
+		}
 	}
 
 	if errMap != nil {
@@ -506,8 +519,12 @@ func (p *ThreatmodelParser) buildCtx(ctx *hcl.EvalContext, imports []string, par
 	return nil
 }
 
-// parseHCL actually does the parsing - called by either ParseHCLFile or ParseHCLRaw
-func (p *ThreatmodelParser) parseHCL(f *hcl.File, filename string, isChild bool) error {
+// decodeHCL handles the per-file portion of parsing — building the eval
+// context (imports, vars, element reference slugs), syntax-level id checks,
+// decoding into wrapped, and control-import resolution. Set-level validation
+// is left to the caller, so multiple files can decode into one set before
+// validating (see ParseHCLRawSet).
+func (p *ThreatmodelParser) decodeHCL(f *hcl.File, filename string, isChild bool, wrapped *ThreatmodelWrapped) error {
 
 	ctx := &hcl.EvalContext{}
 	ctx.Variables = map[string]cty.Value{}
@@ -557,7 +574,7 @@ func (p *ThreatmodelParser) parseHCL(f *hcl.File, filename string, isChild bool)
 
 	// var diags hcl.Diagnostics
 
-	diags := gohcl.DecodeBody(f.Body, ctx, p.wrapped)
+	diags := gohcl.DecodeBody(f.Body, ctx, wrapped)
 
 	if diags.HasErrors() {
 		return diags
@@ -567,7 +584,12 @@ func (p *ThreatmodelParser) parseHCL(f *hcl.File, filename string, isChild bool)
 	// p.validateSpec(filename)
 
 	// Process control imports after parsing
-	err := p.processControlImports(ctx)
+	return p.processControlImports(ctx, wrapped)
+}
+
+// parseHCL actually does the parsing - called by either ParseHCLFile or ParseHCLRaw
+func (p *ThreatmodelParser) parseHCL(f *hcl.File, filename string, isChild bool) error {
+	err := p.decodeHCL(f, filename, isChild, p.wrapped)
 	if err != nil {
 		return err
 	}
@@ -577,24 +599,19 @@ func (p *ThreatmodelParser) parseHCL(f *hcl.File, filename string, isChild bool)
 		return err
 	}
 
-	err = p.validateTms()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return p.validateTms()
 }
 
 // processControlImports handles control_import fields by resolving them from imports
 // and merging them into the Controls array
-func (p *ThreatmodelParser) processControlImports(ctx *hcl.EvalContext) error {
+func (p *ThreatmodelParser) processControlImports(ctx *hcl.EvalContext, wrapped *ThreatmodelWrapped) error {
 	// We need to re-parse the HCL to extract control_import expressions
 	// This is a more complex approach that requires custom HCL parsing
 
 	// For now, let's implement a simpler approach where we expect
 	// the control_imports to be provided as string references that we can resolve
-	for i := range p.wrapped.Threatmodels {
-		tm := &p.wrapped.Threatmodels[i]
+	for i := range wrapped.Threatmodels {
+		tm := &wrapped.Threatmodels[i]
 		for _, threat := range tm.Threats {
 			// Merge deprecated ExpandedControls into Controls for backward compatibility
 			if len(threat.ExpandedControls) > 0 {
@@ -757,6 +774,69 @@ func (p *ThreatmodelParser) ParseHCLRaw(input []byte) error {
 	}
 
 	return p.parseHCL(f, "STDIN", false)
+}
+
+// NamedInput pairs raw HCL content with the name used to attribute
+// diagnostics to it — typically the name of the file it came from.
+type NamedInput struct {
+	Name    string
+	Content []byte
+}
+
+// ParseHCLRawSet parses multiple named HCL inputs into one parsed set.
+// Each input decodes with its own name so diagnostics point at the right
+// input, and imports and variables are handled per input, the same way
+// ParseHCLFile treats a top-level file. Set-level validation — unique names
+// and ids, reserved segments, extends resolution — runs once over the merged
+// set, so a model may extend a parent declared in another input regardless
+// of input order. Unlike single-input parsing, each input may carry its own
+// backend block (at most one per input); all of them are exposed on the
+// wrapped result, and any cross-input backend agreement is left to the
+// consumer.
+func (p *ThreatmodelParser) ParseHCLRawSet(inputs []NamedInput) error {
+	parser := hclparse.NewParser()
+
+	var errMap error
+	for _, input := range inputs {
+		f, diags := parser.ParseHCL(input.Content, input.Name)
+		if diags.HasErrors() {
+			errMap = multierror.Append(errMap, diags)
+			continue
+		}
+
+		fileWrapped := &ThreatmodelWrapped{}
+		err := p.decodeHCL(f, input.Name, false, fileWrapped)
+		if err != nil {
+			errMap = multierror.Append(errMap, err)
+			continue
+		}
+
+		if len(fileWrapped.Backends) > 1 {
+			errMap = multierror.Append(errMap, fmt.Errorf(
+				"input '%s': only one backend block is allowed per input, found %d",
+				input.Name,
+				len(fileWrapped.Backends),
+			))
+		}
+
+		p.wrapped.Threatmodels = append(p.wrapped.Threatmodels, fileWrapped.Threatmodels...)
+		p.wrapped.Components = append(p.wrapped.Components, fileWrapped.Components...)
+		p.wrapped.Variables = append(p.wrapped.Variables, fileWrapped.Variables...)
+		p.wrapped.Backends = append(p.wrapped.Backends, fileWrapped.Backends...)
+		if p.wrapped.SpecVersion == "" {
+			p.wrapped.SpecVersion = fileWrapped.SpecVersion
+		}
+	}
+
+	// Set-level validation over a set with undecoded inputs would only
+	// produce misleading errors — e.g. an unknown extends target whose
+	// parent lives in the input that failed — so per-input errors return
+	// on their own.
+	if errMap != nil {
+		return errMap
+	}
+
+	return p.validateTms()
 }
 
 // ParseJSONFile parses a single JSON Threatmodel file
