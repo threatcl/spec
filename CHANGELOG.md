@@ -1,3 +1,35 @@
+## 0.6.0
+
+### Unreleased
+
+CHANGES:
+
+* New `ParseHCLRawSet` parses multiple named HCL inputs (`NamedInput`) into
+  one parsed set. Each input decodes with its own name so diagnostics point
+  at the offending input, and imports, variables and `including` are handled
+  per input the same way `ParseHCLFile`/`ParseFile` treat a top-level file —
+  relative `including`/import paths resolve against the input's name, so
+  names should be real file paths when inputs use either. Set-level
+  validation —
+  unique names and ids, reserved segments, `extends` resolution — runs once
+  over the merged set, so a model may extend a parent declared in another
+  input regardless of input order. Unlike single-input parsing, each input
+  may carry its own `backend` block (at most one per input); all of them are
+  exposed via `GetWrapped().Backends`, and cross-input backend agreement is
+  left to the consumer.
+* New `SetSkipExtendsResolution` parses without resolving `extends`
+  inheritance: an `extends` target missing from the parsed content is not an
+  error, and no inherited entities are materialized — the `Extends` field
+  stays populated for the consumer to resolve later, so a single file of a
+  multi-file set can be parsed file-faithfully. All other validation and
+  normalization (per-model checks, risk normalization, control imports, id
+  grammar and uniqueness) is unchanged, and the default behavior with
+  resolution on is untouched.
+* BREAKING: the `backend` block's `segment` attribute (the `BackendSegment`
+  field) is removed. It was added in v0.4.0 for a feature that never
+  shipped; `segment = "..."` in a backend block is now an "Unsupported
+  argument" parse error.
+
 ## 0.5.3
 
 ### Jul 12, 2026

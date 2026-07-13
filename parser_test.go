@@ -1490,6 +1490,19 @@ func TestValidateBackend(t *testing.T) {
 			true,
 		},
 		{
+			"backend_with_segment",
+			`spec_version = "` + Version + `"
+			backend "threatcl-cloud" {
+				organization = "x"
+				segment = "y"
+			}
+			threatmodel "test" {
+				author = "@xntrik"
+			}`,
+			"Unsupported argument",
+			true,
+		},
+		{
 			"multiple_backends",
 			`spec_version = "` + Version + `"
 			backend "backend_one" {
