@@ -380,6 +380,60 @@ threatmodel "Two" {
 	}
 }
 
+func TestParseHCLRawSetIncluding(t *testing.T) {
+	// `including` processes per input after set-level validation, the same
+	// way ParseFile treats it — with the included path resolved relative to
+	// the input's name.
+	tmParser, err := parseSetTest(t, []NamedInput{
+		{Name: "testdata/including/set-tower.hcl", Content: []byte(`threatmodel "Tower of London" {
+  author    = "@xntrik"
+  including = "shared/tower.hcl"
+
+  threat "deface_crown" {
+    description = "Someone who isn't the Queen defaces the crown"
+  }
+}`)},
+		{Name: "other.hcl", Content: []byte(`threatmodel "Other" {
+  author = "@xntrik"
+}`)},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	tm := &tmParser.GetWrapped().Threatmodels[0]
+	if tm.Description != "A historic castle" {
+		t.Errorf("expected the included description, got %q", tm.Description)
+	}
+	if len(tm.Threats) != 3 {
+		t.Errorf("expected the model's own threat plus the included ones, got %d", len(tm.Threats))
+	}
+	foundIncluded := false
+	for _, th := range tm.Threats {
+		if th.Name == "steal_crown" {
+			foundIncluded = true
+		}
+	}
+	if !foundIncluded {
+		t.Errorf("expected included threat 'steal_crown'")
+	}
+}
+
+func TestParseHCLRawSetIncludingError(t *testing.T) {
+	_, err := parseSetTest(t, []NamedInput{
+		{Name: "testdata/including/set-broken.hcl", Content: []byte(`threatmodel "Broken" {
+  author    = "@xntrik"
+  including = "shared/no-such-file.hcl"
+}`)},
+	})
+	if err == nil {
+		t.Fatal("expected an error for an unresolvable including, got none")
+	}
+	if !strings.Contains(err.Error(), "input 'testdata/including/set-broken.hcl'") {
+		t.Errorf("expected the error to name the offending input, got: %s", err)
+	}
+}
+
 func TestParseHCLRawSetSingleInputMatchesRaw(t *testing.T) {
 	rawParser, err := parseExtendsTest(t, extendsFixture())
 	if err != nil {

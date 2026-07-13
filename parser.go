@@ -785,18 +785,24 @@ type NamedInput struct {
 
 // ParseHCLRawSet parses multiple named HCL inputs into one parsed set.
 // Each input decodes with its own name so diagnostics point at the right
-// input, and imports and variables are handled per input, the same way
-// ParseHCLFile treats a top-level file. Set-level validation — unique names
-// and ids, reserved segments, extends resolution — runs once over the merged
-// set, so a model may extend a parent declared in another input regardless
-// of input order. Unlike single-input parsing, each input may carry its own
-// backend block (at most one per input); all of them are exposed on the
-// wrapped result, and any cross-input backend agreement is left to the
-// consumer.
+// input, and imports, variables and `including` are handled per input, the
+// same way ParseHCLFile/ParseFile treat a top-level file — a relative
+// `including` or import path resolves against the input's name, so names
+// should be real file paths when inputs use either. Set-level validation —
+// unique names and ids, reserved segments, extends resolution — runs once
+// over the merged set, so a model may extend a parent declared in another
+// input regardless of input order. Unlike single-input parsing, each input
+// may carry its own backend block (at most one per input); all of them are
+// exposed on the wrapped result, and any cross-input backend agreement is
+// left to the consumer.
 func (p *ThreatmodelParser) ParseHCLRawSet(inputs []NamedInput) error {
 	parser := hclparse.NewParser()
 
 	var errMap error
+	// Origin input name of each threat model this call appends, so that
+	// `including` can resolve relative to the input that declared it.
+	base := len(p.wrapped.Threatmodels)
+	origins := []string{}
 	for _, input := range inputs {
 		f, diags := parser.ParseHCL(input.Content, input.Name)
 		if diags.HasErrors() {
@@ -820,6 +826,9 @@ func (p *ThreatmodelParser) ParseHCLRawSet(inputs []NamedInput) error {
 		}
 
 		p.wrapped.Threatmodels = append(p.wrapped.Threatmodels, fileWrapped.Threatmodels...)
+		for range fileWrapped.Threatmodels {
+			origins = append(origins, input.Name)
+		}
 		p.wrapped.Components = append(p.wrapped.Components, fileWrapped.Components...)
 		p.wrapped.Variables = append(p.wrapped.Variables, fileWrapped.Variables...)
 		p.wrapped.Backends = append(p.wrapped.Backends, fileWrapped.Backends...)
@@ -836,7 +845,31 @@ func (p *ThreatmodelParser) ParseHCLRawSet(inputs []NamedInput) error {
 		return errMap
 	}
 
-	return p.validateTms()
+	err := p.validateTms()
+	if err != nil {
+		return err
+	}
+
+	// `including` merges after validation, as in ParseFile.
+	for i, origin := range origins {
+		w := &p.wrapped.Threatmodels[base+i]
+		if w.Including != "" {
+			err := w.Include(p.specCfg, origin)
+			if err != nil {
+				errMap = multierror.Append(errMap, fmt.Errorf(
+					"input '%s': %s",
+					origin,
+					err,
+				))
+			}
+		}
+	}
+
+	if errMap != nil {
+		return errMap
+	}
+
+	return nil
 }
 
 // ParseJSONFile parses a single JSON Threatmodel file

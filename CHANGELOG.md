@@ -6,8 +6,11 @@ CHANGES:
 
 * New `ParseHCLRawSet` parses multiple named HCL inputs (`NamedInput`) into
   one parsed set. Each input decodes with its own name so diagnostics point
-  at the offending input, and imports/variables are handled per input the
-  same way `ParseHCLFile` treats a top-level file. Set-level validation —
+  at the offending input, and imports, variables and `including` are handled
+  per input the same way `ParseHCLFile`/`ParseFile` treat a top-level file —
+  relative `including`/import paths resolve against the input's name, so
+  names should be real file paths when inputs use either. Set-level
+  validation —
   unique names and ids, reserved segments, `extends` resolution — runs once
   over the merged set, so a model may extend a parent declared in another
   input regardless of input order. Unlike single-input parsing, each input
