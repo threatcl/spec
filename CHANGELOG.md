@@ -1,6 +1,6 @@
 ## 0.6.0
 
-### Unreleased
+### Jul 14, 2026
 
 CHANGES:
 
