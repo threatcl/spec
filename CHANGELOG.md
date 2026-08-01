@@ -1,3 +1,17 @@
+## 0.7.0
+
+### 1 Aug, 2026
+
+CHANGES:
+
+* BREAKING: `ValidateTm` now rejects duplicate names among a threat model's
+  entities, alongside the existing `information_asset`, `trust_zone`, DFD
+  element and flow checks:
+  * two `threat` blocks with the same name in one `threatmodel`
+    (`TM '<tm>': duplicate threat '<name>'`), and
+  * two `control` blocks with the same name in one `threat`
+    (`TM '<tm>' / Threat '<threat>': duplicate control '<name>'`).
+
 ## 0.6.0
 
 ### Jul 14, 2026

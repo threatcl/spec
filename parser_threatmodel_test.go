@@ -383,6 +383,152 @@ func TestTmaddcovIncludeInvalidChild(t *testing.T) {
 	}
 }
 
+// Threat names are unique per threatmodel and control names unique per
+// threat: they're the identity key `extends`/`including` merge on, and
+// threatcl cloud rejects a duplicate of either.
+func TestValidateTmDuplicateThreatAndControlNames(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+		exp  string
+	}{
+		{
+			"duplicate_threat_name",
+			`threatmodel "test" {
+				author = "@x"
+				threat "same" {
+					description = "first"
+				}
+				threat "same" {
+					description = "second"
+				}
+			}`,
+			"TM 'test': duplicate threat 'same'",
+		},
+		{
+			"duplicate_control_name",
+			`threatmodel "test" {
+				author = "@x"
+				threat "thr" {
+					description = "a threat"
+					control "ctl" {
+						description = "first"
+					}
+					control "ctl" {
+						description = "second"
+					}
+				}
+			}`,
+			"TM 'test' / Threat 'thr': duplicate control 'ctl'",
+		},
+		{
+			"duplicate_control_name_via_expanded_control",
+			`threatmodel "test" {
+				author = "@x"
+				threat "thr" {
+					description = "a threat"
+					control "ctl" {
+						description = "declared"
+					}
+					expanded_control "ctl" {
+						description = "merged in for backwards compatibility"
+					}
+				}
+			}`,
+			"TM 'test' / Threat 'thr': duplicate control 'ctl'",
+		},
+		{
+			// Controls are scoped to their threat, so the same control name
+			// under two different threats is fine.
+			"same_control_name_across_threats",
+			`threatmodel "test" {
+				author = "@x"
+				threat "one" {
+					description = "first"
+					control "ctl" {
+						description = "on the first threat"
+					}
+				}
+				threat "two" {
+					description = "second"
+					control "ctl" {
+						description = "on the second threat"
+					}
+				}
+			}`,
+			"",
+		},
+		{
+			"unique_names",
+			`threatmodel "test" {
+				author = "@x"
+				threat "one" {
+					description = "first"
+					control "ctl_a" {
+						description = "a"
+					}
+					control "ctl_b" {
+						description = "b"
+					}
+				}
+				threat "two" {
+					description = "second"
+				}
+			}`,
+			"",
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			defaultCfg := &ThreatmodelSpecConfig{}
+			defaultCfg.setDefaults()
+			tmParser := NewThreatmodelParser(defaultCfg)
+
+			err := tmParser.ParseHCLRaw([]byte(tc.in))
+
+			if tc.exp == "" {
+				if err != nil {
+					t.Errorf("%s: unexpected error: %s", tc.name, err)
+				}
+				return
+			}
+
+			if err == nil {
+				t.Fatalf("%s: expected an error containing '%s', got none", tc.name, tc.exp)
+			}
+
+			if !strings.Contains(err.Error(), tc.exp) {
+				t.Errorf("%s: expected an error containing '%s', got: %s", tc.name, tc.exp, err)
+			}
+		})
+	}
+}
+
+// A control_imports entry resolving to the same name as a declared control is
+// the local shape of the collision threatcl cloud reports as duplicate_entity
+// when library enrichment expands a ref.
+func TestValidateTmDuplicateControlNameFromImport(t *testing.T) {
+	defaultCfg := &ThreatmodelSpecConfig{}
+	defaultCfg.setDefaults()
+	tmParser := NewThreatmodelParser(defaultCfg)
+
+	err := tmParser.ParseFile("./testdata/tm-dupe-control-import.hcl", false)
+
+	if err == nil {
+		t.Fatalf("expected an error for the imported control colliding with a declared one")
+	}
+
+	exp := "TM 'test_dupe_control_import' / Threat 'collides_with_import': duplicate control 'authentication_control'"
+	if !strings.Contains(err.Error(), exp) {
+		t.Errorf("expected an error containing '%s', got: %s", exp, err)
+	}
+}
+
 func TestTmaddcovFetchRemoteTmTempDirFailure(t *testing.T) {
 	defaultCfg := &ThreatmodelSpecConfig{}
 	defaultCfg.setDefaults()

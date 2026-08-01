@@ -834,9 +834,43 @@ func (tm *Threatmodel) ValidateTm(p *ThreatmodelParser) error {
 		}
 	} // end of ranging over dataflowdiagrams
 
-	// Normalize threat impacts and stride
+	// Normalize threat impacts and stride, and check that threat names are
+	// unique per threatmodel and control names unique per threat. Names are
+	// the identity key everywhere else in the parser — `extends` and
+	// `including` merge threats by name (addTIfNotExist), and threatcl cloud
+	// rejects a duplicate at parse and enrichment time — so a repeat is an
+	// authoring error rather than two distinct entities.
 	if tm.Threats != nil {
+		threatNames := make(map[string]interface{})
 		for _, tr := range tm.Threats {
+			if _, ok := threatNames[tr.Name]; ok {
+				errMap = multierror.Append(errMap, fmt.Errorf(
+					"TM '%s': duplicate threat '%s'",
+					tm.Name,
+					tr.Name,
+				))
+			}
+
+			threatNames[tr.Name] = nil
+
+			// Controls here already include any deprecated expanded_control
+			// blocks and resolved control_imports, both of which are merged
+			// into Controls during decoding (see processControlImports), so an
+			// imported control colliding with a declared one is caught too.
+			controlNames := make(map[string]interface{})
+			for _, control := range tr.Controls {
+				if _, ok := controlNames[control.Name]; ok {
+					errMap = multierror.Append(errMap, fmt.Errorf(
+						"TM '%s' / Threat '%s': duplicate control '%s'",
+						tm.Name,
+						tr.Name,
+						control.Name,
+					))
+				}
+
+				controlNames[control.Name] = nil
+			}
+
 			normalized := []string{}
 			for _, impact := range tr.ImpactType {
 				normalized = append(normalized, p.normalizeImpactType(impact))
