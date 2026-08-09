@@ -67,5 +67,10 @@ New SSH key → key type "Signing key"). After that, `git tag -s` produces signe
 tags and your commits show as *Verified*. See [docs/SLSA.md](docs/SLSA.md) for
 how this maps to the SLSA Source track.
 
+## License
+
+This project is licensed under the [MIT License](LICENSE). By submitting a pull
+request, you agree that your contributions are licensed under the same terms.
+
 Thanks,
 Christian @xntrik Frichot
