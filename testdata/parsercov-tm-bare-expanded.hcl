@@ -1,4 +1,4 @@
-spec_version = "0.7.0"
+spec_version = "0.8.0"
 
 threatmodel "parsercov_bare_expanded" {
   imports = ["parsercov-controls.hcl"]
