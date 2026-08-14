@@ -1,3 +1,30 @@
+## 0.8.0
+
+### 15 Aug, 2026
+
+CHANGES:
+
+* New `github.com/threatcl/spec/invariants` subpackage: the parser and
+  evaluator for invariants files — org-wide, machine-checked rules over threat
+  models — extracted from the threatcl CLI's `internal/invariants` (threatcl
+  v0.6.5) with no behavioural change, so every consumer shares one evaluator
+  and verdicts agree by construction. `ParseFile`/`ParseHCLRaw` and `Evaluate`
+  are the seams; `Invariant` remains constructible only by parsing. The
+  language reference now lives at [docs/invariants.md](docs/invariants.md).
+* `Evaluate` takes variadic `EvaluateOption`s. `Evaluate(invs, models)` is
+  unchanged; `WithLenientExemptions()` makes an exemption whose model
+  reference can't be resolved against the models in the run inactive rather
+  than a hard error, for callers evaluating a shared invariants file against a
+  subset of the fleet (one model at a time). Malformed references and model
+  registry errors stay hard errors in both modes.
+* `Report` gains `InactiveExemptions []*InactiveExemption` — the waivers that
+  named no model in this run, each with the invariant, the source text of its
+  `model` expression, its justification, and a reason. This includes
+  `try(threatmodel["Other"], null)` references in the default strict mode,
+  which were previously skipped silently.
+* `Exemption` gains an exported `Reference string`: the source text of its
+  `model` expression, captured at parse time.
+
 ## 0.7.0
 
 ### 1 Aug, 2026
