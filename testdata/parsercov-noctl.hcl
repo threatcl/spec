@@ -1,1 +1,1 @@
-spec_version = "0.7.0"
+spec_version = "0.8.0"

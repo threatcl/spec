@@ -1,4 +1,4 @@
-spec_version = "0.7.0"
+spec_version = "0.8.0"
 
 threatmodel "Coverage Castle Base" {
   description = "Base model for include coverage"
