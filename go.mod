@@ -7,7 +7,7 @@ require (
 	github.com/emicklei/dot v1.11.0
 	github.com/goccy/go-graphviz v0.2.10
 	github.com/google/go-cmp v0.7.0
-	github.com/hashicorp/go-getter v1.8.7
+	github.com/hashicorp/go-getter v1.8.8
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.9.0
 	github.com/hashicorp/hcl/v2 v2.24.0
