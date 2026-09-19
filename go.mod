@@ -10,7 +10,7 @@ require (
 	github.com/hashicorp/go-getter v1.8.9
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.9.0
-	github.com/hashicorp/hcl/v2 v2.24.0
+	github.com/hashicorp/hcl/v2 v2.25.0
 	github.com/threatcl/go-otm v0.0.2
 	github.com/zclconf/go-cty v1.19.0
 	github.com/zenizh/go-capturer v0.0.0-20211219060012-52ea6c8fed04
