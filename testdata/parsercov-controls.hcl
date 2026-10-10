@@ -1,4 +1,4 @@
-spec_version = "0.8.1"
+spec_version = "0.8.2"
 
 component "expanded_control" "bare_expanded" {
   description = "Expanded control with no notes or attributes"

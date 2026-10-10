@@ -1,4 +1,4 @@
-spec_version = "0.8.1"
+spec_version = "0.8.2"
 
 threatmodel "parsercov_empty_expanded" {
   imports = ["parsercov-noctl.hcl"]
