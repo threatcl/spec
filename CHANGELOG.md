@@ -1,3 +1,12 @@
+## 0.8.2
+
+### 10 Oct, 2026
+
+CHANGES:
+
+* Bumped to golang 1.27.2
+* Some minor golang dep bumps
+
 ## 0.8.1
 
 ### 28 Aug, 2026

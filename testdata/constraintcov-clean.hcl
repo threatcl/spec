@@ -1,4 +1,4 @@
-spec_version = "0.8.1"
+spec_version = "0.8.2"
 
 threatmodel "constraintcov clean" {
   description = "Threat model that trips no deprecation constraints"
