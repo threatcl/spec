@@ -1,4 +1,4 @@
- spec_version = "0.8.2"
+ spec_version = "0.8.3"
 
  threatmodel "multi tm1" {
    description = "A threat model that trips multiple constraints"
