@@ -1,3 +1,11 @@
+## 0.8.3
+
+### 15 Oct, 2026
+
+CHANGES:
+
+* Minor golang dep bump (go-getter)
+
 ## 0.8.2
 
 ### 10 Oct, 2026
