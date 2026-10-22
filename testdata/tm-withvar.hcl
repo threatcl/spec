@@ -1,4 +1,4 @@
- spec_version = "0.8.3"
+ spec_version = "0.8.4"
 
  variable "test_var" {
    value = "test_var_val"
