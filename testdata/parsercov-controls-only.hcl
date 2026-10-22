@@ -1,4 +1,4 @@
-spec_version = "0.8.3"
+spec_version = "0.8.4"
 
 component "control" "parsercov_fallback_control" {
   description = "Control living only in the control namespace"
