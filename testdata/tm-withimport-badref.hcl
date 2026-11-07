@@ -1,4 +1,4 @@
- spec_version = "0.8.4"
+ spec_version = "0.8.5"
 
  threatmodel "test" {
    imports = ["subfolder/othercontrols.hcl"]

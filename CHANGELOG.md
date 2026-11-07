@@ -1,3 +1,11 @@
+## 0.8.5
+
+### 7 Nov, 2026
+
+CHANGES:
+
+* Bump github.com/klauspost/compress to v1.20.3 (GO-2026-6865)
+
 ## 0.8.4
 
 ### 22 Oct, 2026
