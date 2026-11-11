@@ -1,4 +1,4 @@
-spec_version = "0.8.5"
+spec_version = "0.8.6"
 
 threatmodel "constraintcov expanded" {
   description = "Threat model with a deprecated expanded_control block"
